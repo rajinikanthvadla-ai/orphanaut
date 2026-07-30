@@ -26,13 +26,10 @@ def list_sso_profiles() -> list[str]:
     profiles: list[str] = []
     for section in parser.sections():
         name = section.removeprefix("profile ").strip()
-        if parser.has_option(section, "sso_start_url") or parser.has_option(
-            section, "sso_session"
-        ):
+        if parser.has_option(section, "sso_start_url") or parser.has_option(section, "sso_session"):
             profiles.append(name)
         elif section == "default" and (
-            parser.has_option(section, "sso_start_url")
-            or parser.has_option(section, "sso_session")
+            parser.has_option(section, "sso_start_url") or parser.has_option(section, "sso_session")
         ):
             profiles.append("default")
     return sorted(set(profiles))

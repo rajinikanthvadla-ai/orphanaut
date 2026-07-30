@@ -14,6 +14,12 @@ class DeleteError(Exception):
 
 def delete_resource(session: boto3.Session, resource: AwsResource) -> None:
     """Delete a single AWS resource. Raises DeleteError on failure."""
+    if not resource.deletable:
+        raise DeleteError(
+            f"{resource.resource_type} '{resource.name or resource.resource_id}' "
+            "is in use or protected and cannot be deleted."
+        )
+
     region = resource.region if resource.region != "global" else "us-east-1"
 
     try:
@@ -44,6 +50,11 @@ def delete_resource(session: boto3.Session, resource: AwsResource) -> None:
             case ("VPC", "NAT Gateway"):
                 session.client("ec2", region_name=region).delete_nat_gateway(
                     NatGatewayId=resource.extra["nat_gateway_id"]
+                )
+
+            case ("VPC", "Security Group"):
+                session.client("ec2", region_name=region).delete_security_group(
+                    GroupId=resource.extra["group_id"]
                 )
 
             case ("ELB", type_) if "Load Balancer" in type_:
@@ -121,7 +132,15 @@ def delete_resource(session: boto3.Session, resource: AwsResource) -> None:
                 )
 
     except ClientError as exc:
+        code = exc.response.get("Error", {}).get("Code", "")
         message = exc.response.get("Error", {}).get("Message", str(exc))
+        if code == "DependencyViolation":
+            message = (
+                f"{message} This resource is still referenced by another AWS "
+                "resource (e.g. a security group rule, network interface, or "
+                "something outside this scan's visibility). Remove the "
+                "reference in the AWS Console first, then try deleting again."
+            )
         raise DeleteError(message) from exc
 
 

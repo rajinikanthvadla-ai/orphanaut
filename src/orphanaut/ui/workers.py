@@ -11,17 +11,22 @@ from orphanaut.scanners.registry import scan_all
 
 
 class ScanWorker(QObject):
-    progress = Signal(str)
+    progress = Signal(object)
     finished = Signal(list)
     error = Signal(str)
 
-    def __init__(self, session: boto3.Session) -> None:
+    def __init__(self, session: boto3.Session, regions: list[str]) -> None:
         super().__init__()
         self._session = session
+        self._regions = regions
 
     def run(self) -> None:
         try:
-            resources = scan_all(self._session, on_progress=self.progress.emit)
+            resources = scan_all(
+                self._session,
+                on_progress=self.progress.emit,
+                regions=self._regions,
+            )
             self.finished.emit(resources)
         except Exception as exc:
             self.error.emit(str(exc))
@@ -57,4 +62,6 @@ def run_in_thread(worker: QObject, parent: QObject | None = None) -> QThread:
     thread = QThread(parent)
     worker.moveToThread(thread)
     thread.started.connect(worker.run)
+    worker.finished.connect(worker.deleteLater)
+    worker.finished.connect(thread.quit)
     return thread

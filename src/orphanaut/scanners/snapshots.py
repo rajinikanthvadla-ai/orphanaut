@@ -13,11 +13,12 @@ class EbsSnapshotScanner(BaseScanner):
 
     def scan(self) -> list[AwsResource]:
         resources: list[AwsResource] = []
+        if not self._account_id:
+            return resources
         try:
-            ec2 = self.session.client("ec2", region_name=self.region)
-            account_id = self.session.client("sts").get_caller_identity()["Account"]
+            ec2 = self.client("ec2")
             paginator = ec2.get_paginator("describe_snapshots")
-            for page in paginator.paginate(OwnerIds=[account_id]):
+            for page in paginator.paginate(OwnerIds=[self._account_id]):
                 for snap in page.get("Snapshots", []):
                     size = snap.get("VolumeSize", 0)
                     resources.append(
@@ -33,5 +34,5 @@ class EbsSnapshotScanner(BaseScanner):
                         )
                     )
         except ClientError:
-            pass
+            raise
         return resources

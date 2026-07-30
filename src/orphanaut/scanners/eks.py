@@ -14,7 +14,7 @@ class EksScanner(BaseScanner):
     def scan(self) -> list[AwsResource]:
         resources: list[AwsResource] = []
         try:
-            eks = self.session.client("eks", region_name=self.region)
+            eks = self.client("eks")
             paginator = eks.get_paginator("list_clusters")
             for page in paginator.paginate():
                 for cluster_name in page.get("clusters", []):
@@ -32,5 +32,5 @@ class EksScanner(BaseScanner):
                         )
                     )
         except ClientError:
-            pass
+            raise
         return resources

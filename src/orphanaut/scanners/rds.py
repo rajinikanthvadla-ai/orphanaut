@@ -14,7 +14,7 @@ class RdsScanner(BaseScanner):
     def scan(self) -> list[AwsResource]:
         resources: list[AwsResource] = []
         try:
-            rds = self.session.client("rds", region_name=self.region)
+            rds = self.client("rds")
 
             paginator = rds.get_paginator("describe_db_instances")
             for page in paginator.paginate():
@@ -27,7 +27,9 @@ class RdsScanner(BaseScanner):
                             resource_type="DB Instance",
                             region=self.region,
                             status=db.get("DBInstanceStatus", "unknown"),
-                            details=f"Engine: {db.get('Engine', '')} {db.get('DBInstanceClass', '')}",
+                            details=(
+                                f"Engine: {db.get('Engine', '')} {db.get('DBInstanceClass', '')}"
+                            ),
                             extra={"db_instance_identifier": db["DBInstanceIdentifier"]},
                         )
                     )
@@ -48,5 +50,5 @@ class RdsScanner(BaseScanner):
                         )
                     )
         except ClientError:
-            pass
+            raise
         return resources

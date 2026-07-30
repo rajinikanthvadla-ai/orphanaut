@@ -14,7 +14,7 @@ class CloudWatchLogsScanner(BaseScanner):
     def scan(self) -> list[AwsResource]:
         resources: list[AwsResource] = []
         try:
-            client = self.session.client("logs", region_name=self.region)
+            client = self.client("logs")
             paginator = client.get_paginator("describe_log_groups")
             for page in paginator.paginate():
                 for group in page.get("logGroups", []):
@@ -28,10 +28,13 @@ class CloudWatchLogsScanner(BaseScanner):
                             resource_type="Log Group",
                             region=self.region,
                             status="active",
-                            details=f"Stored: {size_mb} MB, Retention: {group.get('retentionInDays', 'never')} days",
+                            details=(
+                                f"Stored: {size_mb} MB, Retention: "
+                                f"{group.get('retentionInDays', 'never')} days"
+                            ),
                             extra={"log_group_name": group["logGroupName"]},
                         )
                     )
         except ClientError:
-            pass
+            raise
         return resources

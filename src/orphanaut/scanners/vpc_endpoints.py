@@ -14,7 +14,7 @@ class VpcEndpointScanner(BaseScanner):
     def scan(self) -> list[AwsResource]:
         resources: list[AwsResource] = []
         try:
-            ec2 = self.session.client("ec2", region_name=self.region)
+            ec2 = self.client("ec2")
             paginator = ec2.get_paginator("describe_vpc_endpoints")
             for page in paginator.paginate():
                 for endpoint in page.get("VpcEndpoints", []):
@@ -32,5 +32,5 @@ class VpcEndpointScanner(BaseScanner):
                         )
                     )
         except ClientError:
-            pass
+            raise
         return resources

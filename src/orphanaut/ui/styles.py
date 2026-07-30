@@ -13,9 +13,25 @@ QWidget {
 }
 
 QLabel#title {
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 700;
     color: #ffffff;
+}
+
+QLabel#appTitle {
+    font-size: 26px;
+    font-weight: 800;
+    color: #ffffff;
+}
+
+QLabel#privacyBadge {
+    background-color: #16362d;
+    border: 1px solid #256d56;
+    border-radius: 14px;
+    color: #86efac;
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 600;
 }
 
 QLabel#subtitle {
@@ -58,6 +74,25 @@ QLabel#errorText {
     color: #fca5a5;
     font-size: 12px;
     padding: 4px 0;
+}
+
+QLabel#warningBanner {
+    background-color: #3b2f16;
+    border: 1px solid #a16207;
+    border-radius: 8px;
+    color: #fde68a;
+    padding: 10px 12px;
+    font-size: 12px;
+}
+
+QLabel#scanBanner {
+    background-color: #172f52;
+    border: 1px solid #2563eb;
+    border-radius: 8px;
+    color: #bfdbfe;
+    padding: 10px 12px;
+    font-size: 12px;
+    font-weight: 600;
 }
 
 QFrame#stepsCard {
@@ -120,6 +155,12 @@ QFrame#welcomeCard {
     background-color: #1f2329;
     border: 1px solid #2d3340;
     border-radius: 12px;
+}
+
+QSplitter::handle {
+    background-color: #2d3340;
+    width: 1px;
+    margin: 0 8px;
 }
 
 QLabel#welcomeTitle {
@@ -324,18 +365,38 @@ QStatusBar {
     border-top: 1px solid #2d3340;
 }
 
+QLabel#creditLabel {
+    color: #4b5563;
+    font-size: 11px;
+    font-style: italic;
+    padding-right: 6px;
+}
+
 QProgressBar {
-    border: none;
-    border-radius: 4px;
+    border: 1px solid #3d4450;
+    border-radius: 6px;
     background-color: #252a33;
     text-align: center;
     color: #e4e6eb;
-    max-height: 8px;
+    min-height: 18px;
+    max-height: 18px;
+    font-size: 11px;
 }
 
 QProgressBar::chunk {
     background-color: #3b82f6;
     border-radius: 4px;
+}
+
+QListWidget#regionList {
+    background-color: #1f2329;
+    border: 1px solid #2d3340;
+    border-radius: 8px;
+    padding: 4px;
+}
+
+QListWidget#regionList::item {
+    padding: 4px 2px;
 }
 
 QLineEdit#search {

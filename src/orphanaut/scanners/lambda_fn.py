@@ -14,7 +14,7 @@ class LambdaScanner(BaseScanner):
     def scan(self) -> list[AwsResource]:
         resources: list[AwsResource] = []
         try:
-            client = self.session.client("lambda", region_name=self.region)
+            client = self.client("lambda")
             paginator = client.get_paginator("list_functions")
             for page in paginator.paginate():
                 for fn in page.get("Functions", []):
@@ -26,10 +26,13 @@ class LambdaScanner(BaseScanner):
                             resource_type="Function",
                             region=self.region,
                             status=fn.get("State", "Active"),
-                            details=f"Runtime: {fn.get('Runtime', 'N/A')}, Memory: {fn.get('MemorySize', 0)} MB",
+                            details=(
+                                f"Runtime: {fn.get('Runtime', 'N/A')}, "
+                                f"Memory: {fn.get('MemorySize', 0)} MB"
+                            ),
                             extra={"function_name": fn["FunctionName"]},
                         )
                     )
         except ClientError:
-            pass
+            raise
         return resources

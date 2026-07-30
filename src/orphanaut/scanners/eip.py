@@ -14,7 +14,7 @@ class ElasticIpScanner(BaseScanner):
     def scan(self) -> list[AwsResource]:
         resources: list[AwsResource] = []
         try:
-            ec2 = self.session.client("ec2", region_name=self.region)
+            ec2 = self.client("ec2")
             response = ec2.describe_addresses()
             for addr in response.get("Addresses", []):
                 allocation_id = addr.get("AllocationId", addr.get("PublicIp", ""))
@@ -35,5 +35,5 @@ class ElasticIpScanner(BaseScanner):
                     )
                 )
         except ClientError:
-            pass
+            raise
         return resources

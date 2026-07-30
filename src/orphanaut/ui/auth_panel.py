@@ -30,6 +30,7 @@ class AuthPanel(QWidget):
     def __init__(self) -> None:
         super().__init__()
         self._connected = False
+        self._editing_credentials = False
         self._build_ui()
 
     def _build_ui(self) -> None:
@@ -49,9 +50,9 @@ class AuthPanel(QWidget):
         layout.setSpacing(14)
         scroll.setWidget(content)
 
-        title = QLabel("Orphanaut")
+        title = QLabel("AWS connection")
         title.setObjectName("title")
-        subtitle = QLabel("Find and clean up AWS resources that cost money")
+        subtitle = QLabel("Connect securely, then choose where to scan")
         subtitle.setObjectName("subtitle")
         subtitle.setWordWrap(True)
         layout.addWidget(title)
@@ -63,17 +64,17 @@ class AuthPanel(QWidget):
         self._status_card = self._build_status_card()
         layout.addWidget(self._status_card)
 
-        keys_header = QLabel("Step 1 — Enter your AWS keys")
-        keys_header.setObjectName("sectionHeader")
-        layout.addWidget(keys_header)
+        self._keys_header = QLabel("Step 1 — Enter your AWS keys")
+        self._keys_header.setObjectName("sectionHeader")
+        layout.addWidget(self._keys_header)
 
-        student_tip = QLabel(
+        self._student_tip = QLabel(
             "Most students only need an <b>Access Key ID</b> and <b>Secret Access Key</b> "
             "from their instructor or the AWS Console. You do <b>not</b> need AWS CLI or SSO."
         )
-        student_tip.setObjectName("infoBanner")
-        student_tip.setWordWrap(True)
-        layout.addWidget(student_tip)
+        self._student_tip.setObjectName("infoBanner")
+        self._student_tip.setWordWrap(True)
+        layout.addWidget(self._student_tip)
 
         self._tabs = QTabWidget()
         self._tabs.addTab(self._build_access_keys_tab(), "Access Keys")
@@ -202,7 +203,9 @@ class AuthPanel(QWidget):
         self._advanced_toggle.toggled.connect(self._toggle_advanced)
 
         self._session_token_input = QLineEdit()
-        self._session_token_input.setPlaceholderText("Only if your instructor gave you a session token")
+        self._session_token_input.setPlaceholderText(
+            "Only if your instructor gave you a session token"
+        )
         self._session_token_input.setVisible(False)
 
         form.addRow("Access Key ID", self._access_key_input)
@@ -309,6 +312,10 @@ class AuthPanel(QWidget):
         self._error_label.setVisible(True)
 
     def _on_connect(self) -> None:
+        if self._connected and not self._editing_credentials:
+            self._set_credentials_expanded(True)
+            return
+
         self._clear_field_error()
         if self._tabs.currentIndex() == 0 and not self._validate_access_keys():
             return
@@ -329,18 +336,20 @@ class AuthPanel(QWidget):
 
     def set_connected(self, account_id: str, arn: str) -> None:
         self._connected = True
+        self._editing_credentials = False
         self._status_dot.setProperty("connected", True)
         self._status_dot.style().unpolish(self._status_dot)
         self._status_dot.style().polish(self._status_dot)
         self._status_title.setText("Connected to AWS")
         self._status_detail.setText(f"Account {account_id}\n{arn}")
-        self._connect_btn.setText("Reconnect")
+        self._set_credentials_expanded(False)
         self._error_label.setVisible(False)
         self._set_active_step(1)
         self.connection_changed.emit(True)
 
     def set_error(self, message: str) -> None:
         self._connected = False
+        self._editing_credentials = True
         self._status_dot.setProperty("connected", False)
         self._status_dot.style().unpolish(self._status_dot)
         self._status_dot.style().polish(self._status_dot)
@@ -349,6 +358,17 @@ class AuthPanel(QWidget):
         self._show_error(message)
         self._set_active_step(0)
         self.connection_changed.emit(False)
+
+    def _set_credentials_expanded(self, expanded: bool) -> None:
+        self._editing_credentials = expanded
+        self._keys_header.setVisible(expanded)
+        self._student_tip.setVisible(expanded)
+        self._tabs.setVisible(expanded)
+        self._help_toggle.setVisible(expanded and self._tabs.currentIndex() == 0)
+        if not expanded:
+            self._help_toggle.setChecked(False)
+            self._help_panel.setVisible(False)
+        self._connect_btn.setText("Reconnect to AWS" if expanded else "Change credentials")
 
     def set_connecting(self) -> None:
         self._status_title.setText("Connecting...")

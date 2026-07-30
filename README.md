@@ -15,7 +15,7 @@ Orphanaut helps students and developers discover leftover AWS resources that can
 - **Cross-platform GUI** — native desktop app for **Windows** and **macOS**
 - **Two auth methods** — AWS Access Key + Secret Key, or **AWS SSO** profile
 - **All regions** — scans every enabled AWS region in parallel
-- **17+ resource types** — EC2, EBS, RDS, Lambda, S3, ELB, NAT Gateway, EKS, ECS, and more
+- **18+ resource types** — EC2, EBS, RDS, Lambda, S3, Security Groups, and more
 - **Delete from the app** — select resources and delete with confirmation
 - **Export to CSV** — share or archive scan results
 - **No credential storage** — keys stay in memory for the session only
@@ -84,7 +84,7 @@ Orphanaut scans for billable or commonly forgotten resources:
 |---------|-----------|
 | EC2 | Instances, Elastic IPs |
 | EBS | Volumes, Snapshots |
-| VPC | NAT Gateways, VPC Endpoints |
+| VPC | NAT Gateways, VPC Endpoints, Security Groups |
 | ELB | Application, Network, Classic Load Balancers |
 | RDS | DB Instances, DB Clusters |
 | Lambda | Functions |
@@ -115,6 +115,7 @@ Orphanaut needs **read** access to list resources and **delete** access if you u
         "ec2:ReleaseAddress",
         "ec2:DeleteNatGateway",
         "ec2:DeleteVpcEndpoints",
+        "ec2:DeleteSecurityGroup",
         "elasticloadbalancing:Describe*",
         "elasticloadbalancing:DeleteLoadBalancer",
         "rds:Describe*",

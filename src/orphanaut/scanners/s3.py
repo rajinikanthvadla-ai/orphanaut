@@ -14,7 +14,7 @@ class S3Scanner(BaseScanner):
     def scan(self) -> list[AwsResource]:
         resources: list[AwsResource] = []
         try:
-            s3 = self.session.client("s3", region_name="us-east-1")
+            s3 = self.client("s3", region="us-east-1")
             response = s3.list_buckets()
             for bucket in response.get("Buckets", []):
                 name = bucket["Name"]
@@ -32,7 +32,7 @@ class S3Scanner(BaseScanner):
                     )
                 )
         except ClientError:
-            pass
+            raise
         return resources
 
     def _bucket_region(self, s3_client, bucket_name: str) -> str:

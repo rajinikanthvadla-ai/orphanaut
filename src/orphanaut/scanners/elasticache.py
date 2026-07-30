@@ -14,7 +14,7 @@ class ElastiCacheScanner(BaseScanner):
     def scan(self) -> list[AwsResource]:
         resources: list[AwsResource] = []
         try:
-            client = self.session.client("elasticache", region_name=self.region)
+            client = self.client("elasticache")
             paginator = client.get_paginator("describe_cache_clusters")
             for page in paginator.paginate(ShowCacheNodeInfo=True):
                 for cluster in page.get("CacheClusters", []):
@@ -26,10 +26,13 @@ class ElastiCacheScanner(BaseScanner):
                             resource_type="Cache Cluster",
                             region=self.region,
                             status=cluster.get("CacheClusterStatus", "unknown"),
-                            details=f"Engine: {cluster.get('Engine', '')} {cluster.get('CacheNodeType', '')}",
+                            details=(
+                                f"Engine: {cluster.get('Engine', '')} "
+                                f"{cluster.get('CacheNodeType', '')}"
+                            ),
                             extra={"cache_cluster_id": cluster["CacheClusterId"]},
                         )
                     )
         except ClientError:
-            pass
+            raise
         return resources

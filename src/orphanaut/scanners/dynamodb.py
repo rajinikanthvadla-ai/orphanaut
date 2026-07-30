@@ -14,11 +14,14 @@ class DynamoDbScanner(BaseScanner):
     def scan(self) -> list[AwsResource]:
         resources: list[AwsResource] = []
         try:
-            client = self.session.client("dynamodb", region_name=self.region)
+            client = self.client("dynamodb")
             paginator = client.get_paginator("list_tables")
             for page in paginator.paginate():
                 for table_name in page.get("TableNames", []):
                     table = client.describe_table(TableName=table_name)["Table"]
+                    billing_mode = table.get("BillingModeSummary", {}).get(
+                        "BillingMode", "PROVISIONED"
+                    )
                     resources.append(
                         AwsResource(
                             resource_id=table_name,
@@ -27,10 +30,10 @@ class DynamoDbScanner(BaseScanner):
                             resource_type="Table",
                             region=self.region,
                             status=table.get("TableStatus", "ACTIVE"),
-                            details=f"Billing: {table.get('BillingModeSummary', {}).get('BillingMode', 'PROVISIONED')}",
+                            details=f"Billing: {billing_mode}",
                             extra={"table_name": table_name},
                         )
                     )
         except ClientError:
-            pass
+            raise
         return resources

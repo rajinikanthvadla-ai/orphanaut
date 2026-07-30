@@ -13,8 +13,9 @@ class LoadBalancerScanner(BaseScanner):
 
     def scan(self) -> list[AwsResource]:
         resources: list[AwsResource] = []
+        errors: list[ClientError] = []
         try:
-            elbv2 = self.session.client("elbv2", region_name=self.region)
+            elbv2 = self.client("elbv2")
             paginator = elbv2.get_paginator("describe_load_balancers")
             for page in paginator.paginate():
                 for lb in page.get("LoadBalancers", []):
@@ -31,11 +32,11 @@ class LoadBalancerScanner(BaseScanner):
                             extra={"load_balancer_arn": lb["LoadBalancerArn"]},
                         )
                     )
-        except ClientError:
-            pass
+        except ClientError as exc:
+            errors.append(exc)
 
         try:
-            elb = self.session.client("elb", region_name=self.region)
+            elb = self.client("elb")
             paginator = elb.get_paginator("describe_load_balancers")
             for page in paginator.paginate():
                 for lb in page.get("LoadBalancerDescriptions", []):
@@ -51,7 +52,9 @@ class LoadBalancerScanner(BaseScanner):
                             extra={"load_balancer_name": lb["LoadBalancerName"]},
                         )
                     )
-        except ClientError:
-            pass
+        except ClientError as exc:
+            errors.append(exc)
 
+        if errors and not resources:
+            raise errors[0]
         return resources

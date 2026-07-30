@@ -14,7 +14,7 @@ class EcsScanner(BaseScanner):
     def scan(self) -> list[AwsResource]:
         resources: list[AwsResource] = []
         try:
-            ecs = self.session.client("ecs", region_name=self.region)
+            ecs = self.client("ecs")
             paginator = ecs.get_paginator("list_clusters")
             for page in paginator.paginate():
                 cluster_arns = page.get("clusterArns", [])
@@ -36,5 +36,5 @@ class EcsScanner(BaseScanner):
                         )
                     )
         except ClientError:
-            pass
+            raise
         return resources
