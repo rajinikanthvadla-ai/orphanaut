@@ -1,0 +1,12 @@
+#!/bin/sh
+# Strip Cursor co-author trailers so GitHub does not list Cursor as a contributor.
+# Enable once per clone: git config core.hooksPath .githooks
+
+COMMIT_MSG_FILE=$1
+if [ -z "$COMMIT_MSG_FILE" ] || [ ! -f "$COMMIT_MSG_FILE" ]; then
+  exit 0
+fi
+
+tmp=$(mktemp)
+grep -viE '^(co-authored-by:[[:space:]]*cursor|co-authored-by:[[:space:]]*cursoragent@cursor\.com)' "$COMMIT_MSG_FILE" > "$tmp" || true
+mv "$tmp" "$COMMIT_MSG_FILE"
