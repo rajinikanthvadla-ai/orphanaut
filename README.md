@@ -12,39 +12,45 @@ Orphanaut helps students and developers discover leftover AWS resources that can
 
 ## Features
 
+- **Zero-install download** — students get a ready-to-run `.exe`/`.app`, no Python needed
+- **Cost estimation** — see roughly what each leftover resource costs per month before it bills you
 - **Cross-platform GUI** — native desktop app for **Windows** and **macOS**
 - **Two auth methods** — AWS Access Key + Secret Key, or **AWS SSO** profile
 - **All regions** — scans every enabled AWS region in parallel
 - **18+ resource types** — EC2, EBS, RDS, Lambda, S3, Security Groups, and more
-- **Delete from the app** — select resources and delete with confirmation
+- **Safe deletion** — protected/in-use resources are blocked; confirmation before anything is destroyed
 - **Export to CSV** — share or archive scan results
 - **No credential storage** — keys stay in memory for the session only
 
-## Download
+## Download — no code required
 
-Pre-built executables are available on the [Releases](https://github.com/rajinikanthvadla/orphanaut/releases) page:
+**Students: you don't need to clone this repo or install Python.** Just grab the pre-built app for your OS from the [Releases](https://github.com/rajinikanthvadla-ai/orphanaut/releases) page:
 
-| Platform | File |
-|----------|------|
-| Windows  | `Orphanaut.exe` |
-| macOS    | `Orphanaut-macOS.zip` (extract and open `Orphanaut.app`) |
+| Platform | File | How to run |
+|----------|------|------------|
+| **Windows** | `Orphanaut.exe` | Download → double-click → paste your AWS keys |
+| **macOS** | `Orphanaut-macOS.zip` | Extract → open `Orphanaut.app` |
 
-> **macOS:** On first launch, right-click the app → **Open** if Gatekeeper blocks unsigned builds.
+> **macOS first launch:** If Gatekeeper blocks the app, right-click it → **Open** → **Open anyway**. This is normal for unsigned community apps.
 
-## Quick Start
+## Quick Start (2 minutes)
 
-### Option 1: Download the executable
+1. Download the file for your OS from [Releases](https://github.com/rajinikanthvadla-ai/orphanaut/releases)
+2. Launch **Orphanaut**
+3. Paste your **Access Key ID** and **Secret Access Key** (from your instructor or AWS Console)
+4. Click **Connect**, pick your lab regions, then click **Scan**
+5. Review resources, see their estimated monthly cost, and delete anything you don't need
 
-1. Download the build for your OS from [Releases](https://github.com/rajinikanthvadla/orphanaut/releases).
-2. Launch **Orphanaut**.
-3. Connect with **Access Keys** or an **SSO Profile**.
-4. Click **Scan All Regions**.
-5. Review resources, delete unwanted ones, or export a CSV.
+That's it — no terminal, no Python, no dependencies.
 
-### Option 2: Run from source
+---
+
+### Advanced: run from source
+
+Only needed if you want to contribute to the code itself. Most users should just download the app above.
 
 ```bash
-git clone https://github.com/rajinikanthvadla/orphanaut.git
+git clone https://github.com/rajinikanthvadla-ai/orphanaut.git
 cd orphanaut
 python -m venv .venv
 
