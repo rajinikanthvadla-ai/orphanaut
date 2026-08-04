@@ -24,14 +24,25 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
 
-      - name: Build Windows executable
+      - name: Build Windows app folder
         run: pyinstaller orphanaut.spec --noconfirm
+
+      - name: Copy Windows student guide beside executable
+        run: copy WINDOWS-STUDENTS.txt dist\Orphanaut\WINDOWS-STUDENTS.txt
+        shell: cmd
+
+      - name: Create Windows zip
+        shell: pwsh
+        run: |
+          Compress-Archive -Path dist/Orphanaut -DestinationPath dist/Orphanaut-Windows.zip -Force
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
           name: orphanaut-windows
-          path: dist/Orphanaut.exe
+          path: |
+            dist/Orphanaut-Windows.zip
+            dist/Orphanaut/Orphanaut.exe
 
   build-macos:
     runs-on: macos-latest
@@ -84,6 +95,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            release/Orphanaut.exe
+            release/Orphanaut-Windows.zip
             release/Orphanaut-macOS.zip
           generate_release_notes: true

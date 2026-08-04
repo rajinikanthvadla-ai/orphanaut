@@ -28,8 +28,10 @@ Orphanaut helps students and developers discover leftover AWS resources that can
 
 | Platform | File | How to run |
 |----------|------|------------|
-| **Windows** | `Orphanaut.exe` | Download → double-click → paste your AWS keys |
+| **Windows** | `Orphanaut-Windows.zip` | Extract to e.g. `C:\Orphanaut` → open `Orphanaut.exe` |
 | **macOS** | `Orphanaut-macOS.zip` | Extract → open `Orphanaut.app` |
+
+> **Windows:** This is **not an installer** — nothing installs to Program Files. Extract the zip, then double-click `Orphanaut.exe`. If SmartScreen warns, click **More info** → **Run anyway**. If the app vanishes, check **Windows Security → Protection history** and **Allow** Orphanaut. See `WINDOWS-STUDENTS.txt` in the zip for full steps.
 
 > **macOS first launch:** If Gatekeeper blocks the app, right-click it → **Open** → **Open anyway**. This is normal for unsigned community apps.
 
@@ -169,7 +171,7 @@ pip install -e ".[dev]"
 pyinstaller orphanaut.spec --noconfirm
 ```
 
-- **Windows:** `dist/Orphanaut.exe`
+- **Windows:** `dist/Orphanaut/Orphanaut.exe` (folder build; zip as `Orphanaut-Windows.zip` for releases)
 - **macOS:** `dist/Orphanaut.app`
 
 Releases are built automatically when you push a tag like `v1.0.0`.

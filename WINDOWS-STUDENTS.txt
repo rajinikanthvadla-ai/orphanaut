@@ -1,0 +1,25 @@
+Orphanaut for Windows — quick guide
+====================================
+
+IMPORTANT: This is NOT an installer. Nothing installs to Program Files.
+You download, extract (if zip), and double-click Orphanaut.exe to open the app.
+
+Recommended steps
+-----------------
+1. Download Orphanaut-Windows.zip from GitHub Releases (preferred).
+2. Right-click the zip → Extract All → choose a folder, e.g. C:\Orphanaut
+   (Avoid running from Downloads — Windows sometimes blocks apps there.)
+3. Open the extracted folder → double-click Orphanaut.exe
+4. If Windows SmartScreen appears:
+   - Click "More info" → "Run anyway"
+5. If the app still does not open:
+   - Open Windows Security → Virus & threat protection → Protection history
+   - If Orphanaut was blocked, choose "Allow on device"
+   - Try again from C:\Orphanaut\Orphanaut.exe
+
+If it still fails
+-----------------
+Check this log file on your PC:
+  %USERPROFILE%\Orphanaut\startup.log
+
+Send that file to your instructor if you need help.

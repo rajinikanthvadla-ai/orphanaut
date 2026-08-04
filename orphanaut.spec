@@ -7,11 +7,16 @@ from pathlib import Path
 block_cipher = None
 src = Path(SPECPATH)
 
+# Windows zip build includes a short student guide next to the executable.
+datas = []
+if sys.platform == "win32":
+    datas.append((str(src / "WINDOWS-STUDENTS.txt"), "."))
+
 a = Analysis(
     [str(src / "src" / "orphanaut" / "main.py")],
     pathex=[str(src / "src")],
     binaries=[],
-    datas=[],
+    datas=datas,
     hiddenimports=[
         "orphanaut",
         "orphanaut.main",
@@ -59,27 +64,59 @@ a = Analysis(
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
-exe = EXE(
-    pyz,
-    a.scripts,
-    a.binaries,
-    a.zipfiles,
-    a.datas,
-    [],
-    name="Orphanaut",
-    debug=False,
-    bootloader_ignore_signals=False,
-    strip=False,
-    upx=True,
-    upx_exclude=[],
-    runtime_tmpdir=None,
-    console=False,
-    disable_windowed_traceback=False,
-    argv_emulation=sys.platform == "darwin",
-    target_arch=None,
-    codesign_identity=None,
-    entitlements_file=None,
-)
+# Windows: folder build (onedir) — more reliable than single-file .exe on student PCs.
+# Antivirus and SmartScreen often block one-file PyInstaller apps that unpack to TEMP.
+if sys.platform == "win32":
+    exe = EXE(
+        pyz,
+        a.scripts,
+        [],
+        exclude_binaries=True,
+        name="Orphanaut",
+        debug=False,
+        bootloader_ignore_signals=False,
+        strip=False,
+        upx=False,
+        console=False,
+        disable_windowed_traceback=False,
+        argv_emulation=False,
+        target_arch=None,
+        codesign_identity=None,
+        entitlements_file=None,
+    )
+    coll = COLLECT(
+        exe,
+        a.binaries,
+        a.zipfiles,
+        a.datas,
+        strip=False,
+        upx=False,
+        upx_exclude=[],
+        name="Orphanaut",
+    )
+else:
+    # macOS / other: single-file exe (macOS wraps it in .app below).
+    exe = EXE(
+        pyz,
+        a.scripts,
+        a.binaries,
+        a.zipfiles,
+        a.datas,
+        [],
+        name="Orphanaut",
+        debug=False,
+        bootloader_ignore_signals=False,
+        strip=False,
+        upx=False,
+        upx_exclude=[],
+        runtime_tmpdir=None,
+        console=False,
+        disable_windowed_traceback=False,
+        argv_emulation=sys.platform == "darwin",
+        target_arch=None,
+        codesign_identity=None,
+        entitlements_file=None,
+    )
 
 if sys.platform == "darwin":
     app = BUNDLE(
