@@ -11,7 +11,7 @@ from botocore.exceptions import BotoCoreError, ClientError
 
 from orphanaut.aws.config import AWS_CONFIG
 from orphanaut.aws.regions import get_all_regions
-from orphanaut.models import AwsResource
+from orphanaut.models import CloudProvider, CloudResource
 from orphanaut.scanners.base import BaseScanner
 from orphanaut.scanners.cloudwatch import CloudWatchLogsScanner
 from orphanaut.scanners.dynamodb import DynamoDbScanner
@@ -72,7 +72,7 @@ class ScanProgress:
     completed: int
     total: int
     resources_found: int
-    new_resources: list[AwsResource] = field(default_factory=list)
+    new_resources: list[CloudResource] = field(default_factory=list)
     phase: str = ""
     failed_checks: int = 0
     last_error: str = ""
@@ -108,25 +108,25 @@ def _run_scan_batch(
     completed_offset: int,
     total: int,
     phase: str,
-    resources_so_far: list[AwsResource],
+    resources_so_far: list[CloudResource],
     failures_so_far: list[str],
     max_workers: int = 10,
-) -> tuple[list[AwsResource], list[str]]:
+) -> tuple[list[CloudResource], list[str]]:
     if not tasks:
         return [], []
 
-    batch_resources: list[AwsResource] = []
+    batch_resources: list[CloudResource] = []
     batch_failures: list[str] = []
     completed = completed_offset
 
-    def run_task(region: str, scanner_cls: type[BaseScanner]) -> list[AwsResource]:
+    def run_task(region: str, scanner_cls: type[BaseScanner]) -> list[CloudResource]:
         scanner = scanner_cls(session, region, account_id=account_id)
         return scanner.scan()
 
     def emit(
         message: str,
         *,
-        new_items: list[AwsResource] | None = None,
+        new_items: list[CloudResource] | None = None,
         last_error: str = "",
     ) -> None:
         if not on_progress:
@@ -164,7 +164,7 @@ def _run_scan_batch(
             for future in done:
                 region, scanner_cls = futures[future]
                 completed += 1
-                new_items: list[AwsResource] = []
+                new_items: list[CloudResource] = []
                 error_message = ""
                 try:
                     new_items = future.result()
@@ -199,12 +199,12 @@ def _run_scan_batch(
     return batch_resources, batch_failures
 
 
-def scan_all(
+def scan_aws(
     session: boto3.Session,
     on_progress: Callable[[ScanProgress], None] | None = None,
     max_workers: int = 10,
     regions: list[str] | None = None,
-) -> list[AwsResource]:
+) -> list[CloudResource]:
     """Scan selected regions and global services for billable resources."""
     if on_progress:
         on_progress(
@@ -254,7 +254,7 @@ def scan_all(
             )
         )
 
-    all_resources: list[AwsResource] = []
+    all_resources: list[CloudResource] = []
     failures: list[str] = []
 
     fast_found, fast_failures = _run_scan_batch(
@@ -319,3 +319,48 @@ def scan_all(
         )
 
     return sorted(all_resources, key=lambda r: (r.region, r.service, r.resource_id))
+
+
+def scan_all(
+    provider_session: object,
+    on_progress: Callable[[ScanProgress], None] | None = None,
+    max_workers: int = 10,
+    regions: list[str] | None = None,
+) -> list[CloudResource]:
+    """Dispatch scan to the correct cloud provider."""
+    from orphanaut.providers.session import ProviderSession
+    from orphanaut.scanners.azure_registry import scan_azure
+    from orphanaut.scanners.gcp_registry import scan_gcp
+
+    if not isinstance(provider_session, ProviderSession):
+        return scan_aws(
+            provider_session,  # type: ignore[arg-type]
+            on_progress=on_progress,
+            max_workers=max_workers,
+            regions=regions,
+        )
+
+    match provider_session.provider:
+        case CloudProvider.AWS:
+            return scan_aws(
+                provider_session.session,
+                on_progress=on_progress,
+                max_workers=max_workers,
+                regions=regions,
+            )
+        case CloudProvider.AZURE:
+            return scan_azure(
+                provider_session.session,
+                regions=regions or [],
+                on_progress=on_progress,
+                max_workers=max_workers,
+            )
+        case CloudProvider.GCP:
+            return scan_gcp(
+                provider_session.session,
+                regions=regions or [],
+                on_progress=on_progress,
+                max_workers=max_workers,
+            )
+        case _:
+            return []

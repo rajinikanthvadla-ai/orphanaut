@@ -13,7 +13,11 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from orphanaut.aws.regions import COMMON_REGIONS, region_display_name
+from orphanaut.aws.regions import COMMON_REGIONS as AWS_COMMON
+from orphanaut.aws.regions import region_display_name as aws_region_display_name
+from orphanaut.models import CloudProvider
+from orphanaut.providers.azure_regions import AZURE_COMMON_REGIONS, azure_region_display_name
+from orphanaut.providers.gcp_regions import GCP_COMMON_REGIONS, gcp_region_display_name
 
 
 class RegionPanel(QWidget):
@@ -21,7 +25,9 @@ class RegionPanel(QWidget):
 
     def __init__(self) -> None:
         super().__init__()
+        self._provider = CloudProvider.AWS
         self._all_regions: list[str] = []
+        self._default_region = "us-east-1"
         self._build_ui()
         self.setEnabled(False)
 
@@ -30,14 +36,14 @@ class RegionPanel(QWidget):
         layout.setContentsMargins(0, 8, 0, 0)
         layout.setSpacing(8)
 
-        header = QLabel("Step 2 — Choose regions to scan")
-        header.setObjectName("sectionHeader")
-        layout.addWidget(header)
+        self._header = QLabel("Regions to scan")
+        self._header.setObjectName("sectionHeader")
+        layout.addWidget(self._header)
 
-        tip = QLabel("Pick only the regions you used in class. Fewer regions = much faster scans.")
-        tip.setObjectName("infoBanner")
-        tip.setWordWrap(True)
-        layout.addWidget(tip)
+        self._tip = QLabel("Pick only the regions you used. Fewer regions = faster scans.")
+        self._tip.setObjectName("infoBanner")
+        self._tip.setWordWrap(True)
+        layout.addWidget(self._tip)
 
         buttons = QHBoxLayout()
         self._common_btn = QPushButton("Common 5")
@@ -53,7 +59,7 @@ class RegionPanel(QWidget):
 
         self._list = QListWidget()
         self._list.setObjectName("regionList")
-        self._list.setMinimumHeight(210)
+        self._list.setMinimumHeight(180)
         self._list.itemChanged.connect(self._on_item_changed)
         layout.addWidget(self._list, stretch=1)
 
@@ -61,17 +67,44 @@ class RegionPanel(QWidget):
         self._summary.setObjectName("subtitle")
         layout.addWidget(self._summary)
 
-    def set_regions(self, regions: list[str]) -> None:
+    def set_provider(self, provider: CloudProvider) -> None:
+        self._provider = provider
+        self._header.setText(f"{provider.label} regions to scan")
+
+    def _display_name(self, region: str) -> str:
+        match self._provider:
+            case CloudProvider.AWS:
+                return aws_region_display_name(region)
+            case CloudProvider.AZURE:
+                return azure_region_display_name(region)
+            case CloudProvider.GCP:
+                return gcp_region_display_name(region)
+            case _:
+                return region
+
+    def _common_set(self) -> frozenset[str]:
+        match self._provider:
+            case CloudProvider.AWS:
+                return AWS_COMMON
+            case CloudProvider.AZURE:
+                return AZURE_COMMON_REGIONS
+            case CloudProvider.GCP:
+                return GCP_COMMON_REGIONS
+            case _:
+                return frozenset()
+
+    def set_regions(self, regions: list[str], *, default_region: str | None = None) -> None:
         self._all_regions = sorted(regions)
+        if default_region:
+            self._default_region = default_region
         self._list.blockSignals(True)
         self._list.clear()
         for region in self._all_regions:
-            item = QListWidgetItem(region_display_name(region))
+            item = QListWidgetItem(self._display_name(region))
             item.setData(Qt.ItemDataRole.UserRole, region)
             item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
-            item.setCheckState(
-                Qt.CheckState.Checked if region == "us-east-1" else Qt.CheckState.Unchecked
-            )
+            checked = region == self._default_region
+            item.setCheckState(Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked)
             self._list.addItem(item)
         self._list.blockSignals(False)
         self.setEnabled(True)
@@ -88,7 +121,8 @@ class RegionPanel(QWidget):
         return selected
 
     def _select_common(self) -> None:
-        self._set_checks(lambda region: region in COMMON_REGIONS)
+        common = self._common_set()
+        self._set_checks(lambda region: region in common)
 
     def _select_all(self) -> None:
         self._set_checks(lambda _region: True)
@@ -125,5 +159,5 @@ class RegionPanel(QWidget):
     def clear(self) -> None:
         self._all_regions = []
         self._list.clear()
-        self._summary.setText("Connect to AWS to load regions")
+        self._summary.setText("Connect to load regions")
         self.setEnabled(False)

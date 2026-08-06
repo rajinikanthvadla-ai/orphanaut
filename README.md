@@ -1,17 +1,19 @@
 # Orphanaut
 
-**Find and clean up billable AWS resources across every region — with a simple desktop GUI.**
+**Find and clean up billable AWS, Azure, and GCP resources — with a simple desktop GUI.**
 
-Orphanaut helps students and developers discover leftover AWS resources that can incur charges (EC2, RDS, EBS, Lambda, S3, and more), review them in one place, and delete them safely from the app.
+Orphanaut helps students and developers discover leftover cloud resources that can incur charges, review them in one place, and delete them safely from the app.
 
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS-lightgrey)
+![Clouds](https://img.shields.io/badge/clouds-AWS%20%7C%20Azure%20%7C%20GCP-orange)
 
 ---
 
 ## Features
 
+- **Multi-cloud** — AWS, Azure, and GCP in one app with a clean provider switcher
 - **Zero-install download** — students get a ready-to-run `.exe`/`.app`, no Python needed
 - **Cost estimation** — see roughly what each leftover resource costs per month before it bills you
 - **Cross-platform GUI** — native desktop app for **Windows** and **macOS**
@@ -68,11 +70,11 @@ orphanaut
 
 ## Authentication
 
-### Access Keys
+### AWS — Access Keys
 
 Enter your **Access Key ID** and **Secret Access Key**. Optionally add a **Session Token** for temporary credentials.
 
-### AWS SSO
+### AWS — SSO
 
 1. Configure SSO with the AWS CLI:
    ```bash
@@ -82,28 +84,29 @@ Enter your **Access Key ID** and **Secret Access Key**. Optionally add a **Sessi
    ```bash
    aws sso login --profile YOUR_PROFILE
    ```
-3. In Orphanaut, select the **SSO Profile** tab, choose your profile, and click **Connect**.
+3. In Orphanaut, select **AWS** → **SSO** tab, choose your profile, and click **Connect**.
+
+### Azure — Service Principal
+
+1. In Azure Portal → **App registrations** → create or use an app
+2. Copy **Tenant ID**, **Client ID**, create a **Client secret**
+3. Copy your **Subscription ID**
+4. Grant the app **Contributor** (or Reader + delete roles) on the subscription
+5. In Orphanaut, select **Azure**, paste all four values, click **Connect**
+
+### GCP — Service Account
+
+1. In Google Cloud Console → **IAM** → **Service accounts** → create key (JSON)
+2. Grant roles like **Viewer** plus delete permissions for resources you want to clean
+3. In Orphanaut, select **GCP**, enter **Project ID**, paste or load the JSON key, click **Connect**
 
 ## Scanned Resources
 
-Orphanaut scans for billable or commonly forgotten resources:
-
-| Service | Resources |
-|---------|-----------|
-| EC2 | Instances, Elastic IPs |
-| EBS | Volumes, Snapshots |
-| VPC | NAT Gateways, VPC Endpoints, Security Groups |
-| ELB | Application, Network, Classic Load Balancers |
-| RDS | DB Instances, DB Clusters |
-| Lambda | Functions |
-| S3 | Buckets (all regions) |
-| ECS | Clusters |
-| EKS | Clusters |
-| ElastiCache | Cache Clusters |
-| DynamoDB | Tables |
-| CloudWatch | Log Groups |
-| Route 53 | Hosted Zones |
-| Lightsail | Instances |
+| Cloud | Services scanned |
+|-------|------------------|
+| **AWS** | EC2, EBS, RDS, Lambda, S3, Security Groups, ELB, NAT, EKS, ECS, and more (18+ types) |
+| **Azure** | Virtual Machines, Managed Disks, Public IPs, Storage Accounts |
+| **GCP** | Compute Instances, Disks, Static IPs, Storage Buckets |
 
 ## IAM Permissions
 

@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "orphanaut"
-version = "1.1.2"
-description = "Cross-platform GUI to find and clean up billable AWS resources across all regions"
+version = "2.0.0"
+description = "Cross-platform GUI to find and clean up billable AWS, Azure, and GCP resources"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11"
 authors = [{ name = "Rajinikanth Vadla" }]
-keywords = ["aws", "cloud", "cleanup", "cost", "gui", "resources"]
+keywords = ["aws", "azure", "gcp", "cloud", "cleanup", "cost", "gui", "resources", "multi-cloud"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: MacOS X",
@@ -26,6 +26,13 @@ classifiers = [
 dependencies = [
     "boto3>=1.34",
     "PySide6>=6.6",
+    "azure-identity>=1.16",
+    "azure-mgmt-compute>=30.0",
+    "azure-mgmt-network>=25.0",
+    "azure-mgmt-resource>=23.0",
+    "azure-mgmt-storage>=21.0",
+    "google-api-python-client>=2.100",
+    "google-auth>=2.28",
 ]
 
 [project.optional-dependencies]

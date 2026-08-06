@@ -399,6 +399,27 @@ QListWidget#regionList::item {
     padding: 4px 2px;
 }
 
+QPushButton#providerBtn {
+    background-color: #252a33;
+    border: 1px solid #3d4450;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-weight: 700;
+    color: #9ca3af;
+}
+
+QPushButton#providerBtn:hover {
+    background-color: #2d3340;
+    color: #e4e6eb;
+}
+
+QPushButton#providerBtn:checked,
+QPushButton#providerBtn[active="true"] {
+    background-color: #1e3a5f;
+    border-color: #3b82f6;
+    color: #ffffff;
+}
+
 QLineEdit#search {
     min-width: 240px;
 }

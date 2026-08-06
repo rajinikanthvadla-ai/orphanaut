@@ -5,7 +5,6 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
-import boto3
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QFileDialog,
@@ -27,27 +26,27 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from orphanaut.auth.credentials import AuthenticationError, create_session, validate_credentials
-from orphanaut.aws.pricing import estimate_monthly_cost, format_monthly_cost
-from orphanaut.models import AuthConfig, AwsResource
+from orphanaut.auth.router import AuthenticationError, create_session, list_regions_for_provider
+from orphanaut.models import AuthConfig, CloudResource
+from orphanaut.providers.pricing import estimate_monthly_cost, format_monthly_cost
+from orphanaut.providers.session import ProviderSession
 from orphanaut.scanners.registry import ScanProgress
-from orphanaut.ui.auth_panel import AuthPanel
-from orphanaut.ui.region_panel import RegionPanel
+from orphanaut.ui.cloud_sidebar import CloudSidebar
 from orphanaut.ui.workers import DeleteWorker, ScanWorker, run_in_thread
 
-TABLE_COLUMNS = [*AwsResource.COLUMNS, "Est. Cost"]
+TABLE_COLUMNS = [*CloudResource.COLUMNS, "Est. Cost"]
 
 
 class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle("Orphanaut — AWS Resource Scanner")
-        self.setMinimumSize(1100, 700)
-        self.resize(1280, 800)
+        self.setWindowTitle("Orphanaut — Multi-Cloud Resource Scanner")
+        self.setMinimumSize(1180, 720)
+        self.resize(1320, 820)
 
-        self._session: boto3.Session | None = None
-        self._resources: list[AwsResource] = []
-        self._resource_map: dict[str, AwsResource] = {}
+        self._session: ProviderSession | None = None
+        self._resources: list[CloudResource] = []
+        self._resource_map: dict[str, CloudResource] = {}
         self._scan_thread = None
         self._scan_worker = None
         self._delete_thread = None
@@ -67,7 +66,7 @@ class MainWindow(QMainWindow):
         brand = QVBoxLayout()
         app_title = QLabel("Orphanaut")
         app_title.setObjectName("appTitle")
-        app_subtitle = QLabel("Find forgotten AWS resources before they cost you")
+        app_subtitle = QLabel("Find forgotten AWS, Azure & GCP resources before they cost you")
         app_subtitle.setObjectName("subtitle")
         brand.addWidget(app_title)
         brand.addWidget(app_subtitle)
@@ -81,16 +80,15 @@ class MainWindow(QMainWindow):
         splitter = QSplitter(Qt.Orientation.Horizontal)
         root_layout.addWidget(splitter, stretch=1)
 
-        self._auth_panel = AuthPanel()
-        self._auth_panel.setMinimumWidth(340)
-        self._auth_panel.setMaximumWidth(420)
-        self._auth_panel.connect_requested.connect(self._on_connect)
-        self._auth_panel.connection_changed.connect(self._on_connection_changed)
-
-        self._region_panel = RegionPanel()
+        self._sidebar = CloudSidebar()
+        self._sidebar.setMinimumWidth(360)
+        self._sidebar.setMaximumWidth(440)
+        self._sidebar.connect_requested.connect(self._on_connect)
+        self._sidebar.connection_changed.connect(self._on_connection_changed)
+        self._region_panel = self._sidebar.region_panel()
         self._region_panel.selection_changed.connect(self._update_scan_button_label)
 
-        splitter.addWidget(self._auth_panel)
+        splitter.addWidget(self._sidebar)
 
         right_panel = QWidget()
         right_layout = QVBoxLayout(right_panel)
@@ -204,7 +202,7 @@ class MainWindow(QMainWindow):
 
         status = QStatusBar()
         self.setStatusBar(status)
-        status.showMessage("Welcome — connect with your AWS Access Keys to get started")
+        status.showMessage("Welcome — pick a cloud provider and connect to get started")
         credit = QLabel("Orphanaut · made by Rajinikanth Vadla")
         credit.setObjectName("creditLabel")
         status.addPermanentWidget(credit)
@@ -236,9 +234,9 @@ class MainWindow(QMainWindow):
         steps = QLabel(
             "<table cellspacing='0' cellpadding='6'>"
             "<tr><td><span class='bigStep'>1</span></td>"
-            "<td><b>Paste your Access Key ID &amp; Secret Key</b> in the left panel</td></tr>"
+            "<td><b>Pick AWS, Azure, or GCP</b> in the left panel</td></tr>"
             "<tr><td><span class='bigStep'>2</span></td>"
-            "<td><b>Click Connect</b> to verify your AWS account</td></tr>"
+            "<td><b>Connect</b> with your cloud credentials</td></tr>"
             "<tr><td><span class='bigStep'>3</span></td>"
             "<td><b>Select regions</b> you used, then click Scan</td></tr>"
             "<tr><td><span class='bigStep'>4</span></td>"
@@ -281,8 +279,8 @@ class MainWindow(QMainWindow):
         heading.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         body = QLabel(
-            "Choose only the regions used in your lab. Start with one region for the "
-            "fastest result; you can add more and scan again."
+            "Select regions in the left sidebar, then scan. "
+            "Start with one region for the fastest result."
         )
         body.setObjectName("welcomeBody")
         body.setWordWrap(True)
@@ -296,7 +294,6 @@ class MainWindow(QMainWindow):
         card_layout.addWidget(icon)
         card_layout.addWidget(heading)
         card_layout.addWidget(body)
-        card_layout.addWidget(self._region_panel, stretch=1)
         card_layout.addWidget(scan_hint)
         layout.addWidget(card)
 
@@ -315,7 +312,7 @@ class MainWindow(QMainWindow):
         card_layout.setSpacing(14)
         card_layout.setContentsMargins(32, 32, 32, 32)
 
-        heading = QLabel("Scanning your AWS account...")
+        heading = QLabel("Scanning your cloud account...")
         heading.setObjectName("welcomeTitle")
         heading.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -369,30 +366,41 @@ class MainWindow(QMainWindow):
     def _load_regions(self) -> None:
         if not self._session:
             return
-        regions = sorted(self._session.get_available_regions("ec2"))
-        self._region_panel.set_regions(regions)
-        self.statusBar().showMessage("Choose regions to scan — us-east-1 is selected by default")
+        provider = self._session.provider
+        regions = list_regions_for_provider(provider, self._session.session)
+        defaults = {
+            "aws": "us-east-1",
+            "azure": "eastus",
+            "gcp": "us-central1",
+        }
+        default = defaults.get(provider.value, regions[0] if regions else "")
+        self._region_panel.set_provider(provider)
+        self._region_panel.set_regions(regions, default_region=default)
+        self.statusBar().showMessage(
+            f"Choose {provider.label} regions to scan — one region is selected by default"
+        )
 
     def _on_connect(self, config: AuthConfig) -> None:
-        self._auth_panel.set_connecting()
+        self._sidebar.set_connecting()
         try:
             session = create_session(config)
-            account_id, arn = validate_credentials(session)
             self._session = session
-            self._auth_panel.set_connected(account_id, arn)
+            self._sidebar.set_connected(
+                config.provider, session.account_id, session.account_label
+            )
             self._scan_btn.setEnabled(True)
             self._ready_scan_btn.setEnabled(True)
             self._regions_btn.setEnabled(True)
             self._load_regions()
             self._update_scan_button_label()
             self.statusBar().showMessage(
-                f"Connected to account {account_id} — select regions and scan"
+                f"Connected to {config.provider.label} — select regions and scan"
             )
         except AuthenticationError as exc:
-            self._auth_panel.set_error(str(exc))
-            self.statusBar().showMessage("Authentication failed — check your Access Keys")
+            self._sidebar.set_error(str(exc))
+            self.statusBar().showMessage("Authentication failed — check your credentials")
         finally:
-            self._auth_panel.set_connect_enabled(True)
+            self._sidebar.set_connect_enabled(True)
 
     def _on_scan(self) -> None:
         if not self._session:
@@ -420,8 +428,9 @@ class MainWindow(QMainWindow):
         self._scan_failed_checks = 0
         self._table.setRowCount(0)
         self._scan_warning_label.setVisible(False)
+        provider = self._session.provider.label
         self._scan_activity_label.setText(
-            f"Scanning {len(selected_regions)} region(s)… Starting AWS checks."
+            f"Scanning {len(selected_regions)} region(s)… Starting {provider} checks."
         )
         self._scan_activity_label.setVisible(True)
         self._content_stack.setCurrentIndex(3)
@@ -465,7 +474,7 @@ class MainWindow(QMainWindow):
             self._content_stack.setCurrentIndex(3)
             self._export_btn.setEnabled(True)
 
-    def _append_resources(self, resources: list[AwsResource]) -> None:
+    def _append_resources(self, resources: list[CloudResource]) -> None:
         self._table.setSortingEnabled(False)
         for resource in resources:
             if resource.display_key in self._resource_map:
@@ -484,7 +493,7 @@ class MainWindow(QMainWindow):
         self._update_delete_button()
 
     @staticmethod
-    def _row_values(resource: AwsResource) -> list[str]:
+    def _row_values(resource: CloudResource) -> list[str]:
         cost = format_monthly_cost(estimate_monthly_cost(resource))
         return [*resource.to_row(), cost]
 
@@ -503,7 +512,7 @@ class MainWindow(QMainWindow):
             f"≈ ${total:,.2f}/mo if left running ({priced}/{len(self._resources)} priced)"
         )
 
-    def _on_scan_finished(self, resources: list[AwsResource]) -> None:
+    def _on_scan_finished(self, resources: list[CloudResource]) -> None:
         self._resources = resources
         self._populate_table(resources)
         self._scan_btn.setEnabled(True)
@@ -514,7 +523,7 @@ class MainWindow(QMainWindow):
         self._progress.setValue(100)
         self._scan_activity_label.setVisible(False)
         self._content_stack.setCurrentIndex(3)
-        self._auth_panel.set_scan_complete()
+        self._sidebar.set_scan_complete()
         if self._scan_failed_checks:
             self.statusBar().showMessage(
                 f"Scan finished with {self._scan_failed_checks} unavailable checks — "
@@ -549,7 +558,7 @@ class MainWindow(QMainWindow):
         self._scan_worker = None
         self._scan_thread = None
 
-    def _populate_table(self, resources: list[AwsResource]) -> None:
+    def _populate_table(self, resources: list[CloudResource]) -> None:
         self._table.setSortingEnabled(False)
         self._table.setRowCount(0)
         self._resource_map.clear()
@@ -591,8 +600,8 @@ class MainWindow(QMainWindow):
         else:
             self._count_label.setText(f"{visible} resources")
 
-    def _selected_resources(self) -> list[AwsResource]:
-        selected: list[AwsResource] = []
+    def _selected_resources(self) -> list[CloudResource]:
+        selected: list[CloudResource] = []
         seen: set[str] = set()
         for item in self._table.selectedItems():
             key = item.data(Qt.ItemDataRole.UserRole)

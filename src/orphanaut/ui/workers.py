@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import boto3
 from PySide6.QtCore import QObject, QThread, Signal
 
 from orphanaut.actions.deleter import DeleteError, delete_resource
-from orphanaut.models import AwsResource
+from orphanaut.models import CloudResource
+from orphanaut.providers.session import ProviderSession
 from orphanaut.scanners.registry import scan_all
 
 
@@ -15,7 +15,7 @@ class ScanWorker(QObject):
     finished = Signal(list)
     error = Signal(str)
 
-    def __init__(self, session: boto3.Session, regions: list[str]) -> None:
+    def __init__(self, session: ProviderSession, regions: list[str]) -> None:
         super().__init__()
         self._session = session
         self._regions = regions
@@ -38,7 +38,7 @@ class DeleteWorker(QObject):
     resource_failed = Signal(str, str)
     finished = Signal()
 
-    def __init__(self, session: boto3.Session, resources: list[AwsResource]) -> None:
+    def __init__(self, session: ProviderSession, resources: list[CloudResource]) -> None:
         super().__init__()
         self._session = session
         self._resources = resources

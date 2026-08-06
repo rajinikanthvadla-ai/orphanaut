@@ -5,15 +5,34 @@ from __future__ import annotations
 import boto3
 from botocore.exceptions import ClientError
 
-from orphanaut.models import AwsResource
+from orphanaut.models import CloudProvider, CloudResource
 
 
 class DeleteError(Exception):
     """Raised when a resource cannot be deleted."""
 
 
-def delete_resource(session: boto3.Session, resource: AwsResource) -> None:
-    """Delete a single AWS resource. Raises DeleteError on failure."""
+def delete_resource(session: object, resource: CloudResource) -> None:
+    """Delete a single cloud resource. Raises DeleteError on failure."""
+    from orphanaut.actions.azure_deleter import delete_azure_resource
+    from orphanaut.actions.gcp_deleter import delete_gcp_resource
+    from orphanaut.providers.session import ProviderSession
+
+    if isinstance(session, ProviderSession):
+        match session.provider:
+            case CloudProvider.AZURE:
+                return delete_azure_resource(session.session, resource)
+            case CloudProvider.GCP:
+                return delete_gcp_resource(session.session, resource)
+            case CloudProvider.AWS:
+                return _delete_aws_resource(session.session, resource)
+            case _:
+                raise DeleteError(f"Unsupported provider: {session.provider}")
+
+    return _delete_aws_resource(session, resource)  # type: ignore[arg-type]
+
+
+def _delete_aws_resource(session: boto3.Session, resource: CloudResource) -> None:
     if not resource.deletable:
         raise DeleteError(
             f"{resource.resource_type} '{resource.name or resource.resource_id}' "
