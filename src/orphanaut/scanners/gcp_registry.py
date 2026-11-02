@@ -92,7 +92,7 @@ def scan_gcp(
     if on_progress:
         on_progress(
             ScanProgress(
-                message=f"Scan complete — {len(all_resources)} resources found",
+                message=f"Scan complete - {len(all_resources)} resources found",
                 completed=total,
                 total=total,
                 resources_found=len(all_resources),

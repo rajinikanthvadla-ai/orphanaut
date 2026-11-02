@@ -36,7 +36,7 @@ REGION_LABELS: dict[str, str] = {
 def region_display_name(region: str) -> str:
     label = REGION_LABELS.get(region)
     if label:
-        return f"{region} — {label}"
+        return f"{region} - {label}"
     return region
 
 

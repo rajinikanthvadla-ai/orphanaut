@@ -3,7 +3,7 @@
 Three ways in:
 * Access keys pasted into the app (optionally with a session token).
 * Browser sign-in through AWS IAM Identity Center (SSO) using the OAuth device
-  flow — no AWS CLI needed; the app opens the browser and waits.
+  flow - no AWS CLI needed; the app opens the browser and waits.
 * A login that already exists on this computer: a named profile in
   ``~/.aws/credentials`` / ``~/.aws/config`` or ``AWS_*`` environment variables.
 """
@@ -130,7 +130,7 @@ def create_aws_session(config: AuthConfig) -> boto3.Session:
             raise AuthenticationError("Access Key ID and Secret Access Key are required.")
         if not (access_key.startswith("AKIA") or access_key.startswith("ASIA")):
             raise AuthenticationError(
-                "That doesn't look like an Access Key ID — it usually starts with "
+                "That doesn't look like an Access Key ID - it usually starts with "
                 "AKIA (long-term) or ASIA (temporary)."
             )
         if access_key.startswith("ASIA") and not config.session_token.strip():
@@ -180,7 +180,7 @@ def validate_aws_session(session: boto3.Session) -> tuple[str, str]:
         code = exc.response.get("Error", {}).get("Code", "Unknown")
         if code in {"ExpiredToken", "InvalidClientTokenId", "SignatureDoesNotMatch"}:
             raise AuthenticationError(
-                "AWS rejected these credentials — they are wrong, deactivated or expired. "
+                "AWS rejected these credentials - they are wrong, deactivated or expired. "
                 "Double-check the Access Key ID and Secret Access Key."
             ) from exc
         raise AuthenticationError(f"AWS authentication failed: {exc}") from exc

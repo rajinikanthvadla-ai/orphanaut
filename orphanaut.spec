@@ -91,6 +91,6 @@ if sys.platform == "darwin":
             "CFBundleVersion": __version__,
             "NSHighResolutionCapable": True,
             "LSMinimumSystemVersion": "11.0",
-            "NSHumanReadableCopyright": "MIT License — made by Rajinikanth Vadla",
+            "NSHumanReadableCopyright": "MIT License - made by Rajinikanth Vadla",
         },
     )

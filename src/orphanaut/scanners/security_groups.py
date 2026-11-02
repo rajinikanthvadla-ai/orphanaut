@@ -42,7 +42,7 @@ class SecurityGroupScanner(BaseScanner):
                 f"Rules: {inbound_rules} inbound / {outbound_rules} outbound"
             )
             if is_referenced and not is_attached and not is_default:
-                details += " — referenced by another security group's rules"
+                details += " - referenced by another security group's rules"
 
             resources.append(
                 AwsResource(
@@ -77,7 +77,7 @@ class SecurityGroupScanner(BaseScanner):
         """Security groups referenced as an allowed source/destination in
         another security group's rules. AWS refuses to delete a group while
         another group's rule still points at it, even if it has no ENI of
-        its own — this is the "depends on" case that otherwise looks safe
+        its own - this is the "depends on" case that otherwise looks safe
         to delete but fails with a DependencyViolation."""
         referenced: set[str] = set()
         for group in groups:

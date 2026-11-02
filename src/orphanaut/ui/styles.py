@@ -1,4 +1,4 @@
-"""Orphanaut visual theme — one light theme that looks the same on Windows and macOS."""
+"""Orphanaut visual theme - one light theme that looks the same on Windows and macOS."""
 
 from __future__ import annotations
 
@@ -57,11 +57,11 @@ QToolTip { background: @text; color: white; border: none; padding: 6px 8px; bord
 
 /* ---------- Header ---------- */
 QFrame#header {
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 @header_from, stop:1 @header_to);
+    background: @header_from;
     border: none;
 }
-QLabel#appTitle { color: white; font-size: 22px; font-weight: 800; }
-QLabel#appTagline { color: #C9C3FF; font-size: 13px; }
+QLabel#appTitle { color: white; font-size: 18px; font-weight: 700; }
+QLabel#appTagline { color: #B7B2E8; font-size: 12px; }
 QLabel#privacyBadge {
     color: #E7E4FF; background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.18);
     border-radius: 13px; padding: 4px 12px; font-size: 12px;
@@ -225,11 +225,12 @@ QScrollBar::handle:horizontal { background: @border_strong; border-radius: 4px; 
 QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }
 QSplitter::handle { background: transparent; }
 QCheckBox { spacing: 8px; }
-QCheckBox::indicator, QListWidget::indicator {
+QCheckBox::indicator, QListWidget::indicator, QTableWidget::indicator {
     width: 15px; height: 15px; border: 1px solid @border_strong; border-radius: 4px;
     background: @surface;
 }
-QCheckBox::indicator:checked, QListWidget::indicator:checked {
+QCheckBox::indicator:checked, QListWidget::indicator:checked,
+QTableWidget::indicator:checked {
     background: @primary; border-color: @primary;
 }
 QStatusBar { background: @surface; border-top: 1px solid @border; color: @muted; }
@@ -264,7 +265,8 @@ def _check_mark_qss() -> str:
         pixmap.save(str(path))
         url = path.as_posix()
         return (
-            "QCheckBox::indicator:checked, QListWidget::indicator:checked "
+            "QCheckBox::indicator:checked, QListWidget::indicator:checked, "
+            "QTableWidget::indicator:checked "
             f'{{ image: url("{url}"); }}'
         )
     except Exception:

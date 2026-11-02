@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "orphanaut"
-version = "2.1.2"
-description = "Free desktop app to find and delete forgotten, billable AWS, Azure, Google Cloud and AI resources (SageMaker, Bedrock, Azure OpenAI, Vertex AI) — with a delete impact map"
+version = "2.2.0"
+description = "Find and delete unused AWS, Azure and Google Cloud resources, including AI services"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11"

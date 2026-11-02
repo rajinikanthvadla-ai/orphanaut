@@ -109,13 +109,13 @@ class VertexEndpointScanner(_VertexScanner):
                         d.get("displayName", d.get("id", "")),
                         note=f"{replicas}× {spec.get('machineType', 'shared')} "
                         f"{spec.get('acceleratorType', '')}".strip()
-                        + " — undeployed",
+                        + " - undeployed",
                         children=[
                             dep(
                                 "Model in Model Registry",
                                 _short(d.get("model", "")),
                                 Action.KEEP,
-                                "kept — delete it from the Models row",
+                                "kept - delete it from the Models row",
                             )
                         ],
                     )
@@ -153,7 +153,7 @@ class VertexModelScanner(_VertexScanner):
                     + [
                         dep(
                             "Model artifacts in Cloud Storage",
-                            "gs://…",
+                            "gs://...",
                             Action.KEEP,
                             "your bucket data is never touched",
                         )
@@ -190,13 +190,13 @@ class VertexVectorSearchScanner(_VertexScanner):
                     dep(
                         "Deployed index",
                         d.get("id", ""),
-                        note=f"{replicas}× {spec.get('machineType', 'auto')} — undeployed",
+                        note=f"{replicas}× {spec.get('machineType', 'auto')} - undeployed",
                         children=[
                             dep(
                                 "Index data",
                                 _short(d.get("index", "")),
                                 Action.KEEP,
-                                "kept — delete from the Index row",
+                                "kept - delete from the Index row",
                             )
                         ],
                     )
@@ -258,7 +258,7 @@ class VertexJobScanner(_VertexScanner):
                         kind,
                         job,
                         job.get("state", "").split("_")[-1].lower(),
-                        "RUNNING — billing now",
+                        "RUNNING - billing now",
                         delete_action=Action.STOP.value,
                         impact_note="the job is cancelled; finished outputs stay in Cloud Storage",
                     )
@@ -285,7 +285,7 @@ class VertexPlatformScanner(_VertexScanner):
                         dep("Sessions and memory", "all"),
                         dep(
                             "Staging bucket",
-                            "gs://…",
+                            "gs://...",
                             Action.KEEP,
                             "your bucket data is never touched",
                         ),

@@ -120,6 +120,6 @@ def test_usage_based_services_are_unknown():
 
 
 def test_format_monthly_cost():
-    assert format_monthly_cost(None) == "—"
+    assert format_monthly_cost(None) == "-"
     assert format_monthly_cost(0.0) == "$0.00"
     assert format_monthly_cost(32.85) == "$32.85/mo"

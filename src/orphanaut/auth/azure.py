@@ -41,7 +41,7 @@ def detect_local_azure() -> str:
             subs = data.get("subscriptions", [])
             default = next((s for s in subs if s.get("isDefault")), subs[0] if subs else None)
             if default:
-                return f"Azure CLI — {default.get('name', default.get('id', ''))}"
+                return f"Azure CLI - {default.get('name', default.get('id', ''))}"
         except (OSError, ValueError):
             pass
     return ""

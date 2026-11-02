@@ -183,4 +183,4 @@ jobs:
           name: Orphanaut ${{ github.ref_name }}
           body_path: docs/RELEASE_NOTES.md
           files: release/*
-          generate_release_notes: true
+

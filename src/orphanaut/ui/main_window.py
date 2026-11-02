@@ -35,7 +35,7 @@ _TAB_LABELS = {
 class MainWindow(QMainWindow):
     def __init__(self, check_updates: bool = True) -> None:
         super().__init__()
-        self.setWindowTitle("Orphanaut — find & clean up forgotten cloud and AI resources")
+        self.setWindowTitle("Orphanaut")
         self.setWindowIcon(app_icon())
         self.setMinimumSize(1180, 740)
         self.resize(1440, 900)
@@ -73,27 +73,25 @@ class MainWindow(QMainWindow):
 
         status = QStatusBar()
         self.setStatusBar(status)
-        status.showMessage("Pick a cloud above, then connect on the left. Press F1 for the guide.")
+        status.showMessage("Ready")
         self._select(CloudProvider.AWS)
 
     def _build_header(self) -> QFrame:
         header = QFrame()
         header.setObjectName("header")
         layout = QHBoxLayout(header)
-        layout.setContentsMargins(22, 14, 22, 14)
+        layout.setContentsMargins(20, 10, 20, 10)
         logo = QLabel()
-        logo.setPixmap(app_icon().pixmap(QSize(40, 40)))
+        logo.setPixmap(app_icon().pixmap(QSize(32, 32)))
         brand = QVBoxLayout()
         brand.setSpacing(0)
         title = QLabel("Orphanaut")
         title.setObjectName("appTitle")
-        tagline = QLabel("Find and clean up forgotten cloud & AI resources before they cost you")
+        tagline = QLabel("Find and remove unused cloud resources")
         tagline.setObjectName("appTagline")
         brand.addWidget(title)
         brand.addWidget(tagline)
-        privacy = QLabel("🔒 Keys never leave this computer")
-        privacy.setObjectName("privacyBadge")
-        guide = QPushButton("?  Guide")
+        guide = QPushButton("Guide")
         guide.setObjectName("headerButton")
         guide.setCursor(Qt.CursorShape.PointingHandCursor)
         guide.clicked.connect(self._open_guide)
@@ -101,12 +99,10 @@ class MainWindow(QMainWindow):
         layout.addSpacing(10)
         layout.addLayout(brand)
         layout.addStretch()
-        updates = QPushButton("⟳  Check for updates")
+        updates = QPushButton("Check for updates")
         updates.setObjectName("headerButton")
         updates.setCursor(Qt.CursorShape.PointingHandCursor)
         updates.clicked.connect(lambda: self._update_banner.check(manual=True))
-        layout.addWidget(privacy)
-        layout.addSpacing(10)
         layout.addWidget(updates)
         layout.addWidget(guide)
         return header
@@ -126,7 +122,7 @@ class MainWindow(QMainWindow):
             button.setCursor(Qt.CursorShape.PointingHandCursor)
             button.setIconSize(QSize(26, 26))
             button.setIcon(cloud_icon(provider, False))
-            button.setToolTip(f"{provider.long_label} — not connected")
+            button.setToolTip(f"{provider.long_label} - not connected")
             button.setStyleSheet(
                 f"QPushButton#cloudTab:checked {{ border-bottom: 3px solid "
                 f"{PROVIDER_COLORS[provider]}; }}"
@@ -136,9 +132,6 @@ class MainWindow(QMainWindow):
             self._tab_buttons[provider] = button
             layout.addWidget(button)
         layout.addStretch()
-        hint = QLabel("Each cloud has its own connection, regions and results")
-        hint.setObjectName("muted")
-        layout.addWidget(hint)
         return bar
 
     def _build_footer(self) -> QFrame:
@@ -148,7 +141,7 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(22, 2, 22, 6)
         version = QLabel(f"v{__version__} · open source (MIT)")
         version.setObjectName("watermark")
-        mark = QLabel("Made with <span style='color:#D92D20'>♥</span> by <b>Rajinikanth Vadla</b>")
+        mark = QLabel("Made by Rajinikanth Vadla")
         mark.setObjectName("watermark")
         mark.setAlignment(Qt.AlignmentFlag.AlignCenter)
         repo = QLabel(
@@ -172,7 +165,7 @@ class MainWindow(QMainWindow):
         button = self._tab_buttons[provider]
         button.setIcon(cloud_icon(provider, connected))
         button.setToolTip(
-            f"{provider.long_label} — {'connected' if connected else 'not connected'}"
+            f"{provider.long_label} - {'connected' if connected else 'not connected'}"
         )
 
     def _show_status(self, provider: CloudProvider, message: str) -> None:

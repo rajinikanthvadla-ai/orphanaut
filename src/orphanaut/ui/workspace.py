@@ -1,4 +1,4 @@
-"""One cloud's workspace: connection, regions, category tabs, results and delete impact map."""
+"""One cloud's workspace: sign-in, regions, category tabs, results and the resource map."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from pathlib import Path
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QBrush, QColor
 from PySide6.QtWidgets import (
+    QCheckBox,
     QFileDialog,
     QFrame,
     QHBoxLayout,
@@ -38,12 +39,12 @@ from orphanaut.scanners.registry import ScanProgress
 from orphanaut.ui.connect_panel import ConnectPanel
 from orphanaut.ui.guide import guide_html
 from orphanaut.ui.impact_panel import DeleteConfirmDialog, ImpactPanel
-from orphanaut.ui.styles import ACTION_COLORS
 from orphanaut.ui.workers import AuthWorker, DeleteWorker, ScanWorker, SwitchWorker, run_in_thread
 
 TABLE_COLUMNS = [
-    "Region", "Service", "Type", "Name", "Status", "Est. $/mo", "Linked", "On delete", "Details",
+    "", "Name", "Type", "Service", "Region", "Status", "Cost/mo", "Links", "Details",
 ]
+_CHECK, _NAME, _COST, _LINKS = 0, 1, 6, 7
 _DEFAULT_REGION = {
     CloudProvider.AWS: "us-east-1",
     CloudProvider.AZURE: "eastus",
@@ -64,10 +65,10 @@ class _NumberDelegate(QStyledItemDelegate):
 
     def displayText(self, value, locale) -> str:  # noqa: N802 - Qt API
         if not isinstance(value, (int, float)) or value < 0 or (not self._money and value == 0):
-            return "—" if not self._money or value < 0 else "$0.00"
+            return "-" if not self._money or value < 0 else "$0"
         if not self._money:
             return str(value)
-        return f"${value:,.0f}" if value >= 100 else f"${value:,.2f}"
+        return f"${value:,.0f}" if value >= 10 else f"${value:,.2f}"
 
 
 class CloudWorkspace(QWidget):
@@ -86,6 +87,7 @@ class CloudWorkspace(QWidget):
         self._threads: dict = {}  # worker -> QThread; keeps both alive while running
         self._auth_worker: AuthWorker | None = None
         self._failures: list[str] = []
+        self._checked: set[str] = set()
         self._build_ui()
 
     # ------------------------------------------------------------------ UI
@@ -117,7 +119,7 @@ class CloudWorkspace(QWidget):
         main_layout.setSpacing(10)
 
         toolbar = QHBoxLayout()
-        self._scan_btn = QPushButton("▶  Scan")
+        self._scan_btn = QPushButton("Scan")
         self._scan_btn.setObjectName("primary")
         self._scan_btn.setEnabled(False)
         self._scan_btn.clicked.connect(self._on_scan)
@@ -126,9 +128,9 @@ class CloudWorkspace(QWidget):
         self._export_btn.clicked.connect(self._on_export)
         self._search = QLineEdit()
         self._search.setObjectName("search")
-        self._search.setPlaceholderText("Search name, ID, service, region…")
+        self._search.setPlaceholderText("Search")
         self._search.textChanged.connect(self._apply_filter)
-        self._delete_btn = QPushButton("Delete selected")
+        self._delete_btn = QPushButton("Delete")
         self._delete_btn.setObjectName("danger")
         self._delete_btn.setEnabled(False)
         self._delete_btn.clicked.connect(self._on_delete)
@@ -144,7 +146,7 @@ class CloudWorkspace(QWidget):
         self._count_label.setObjectName("subtitle")
         self._cost_label = QLabel("")
         self._cost_label.setObjectName("subtitle")
-        self._cost_label.setToolTip("Rough list-price estimate if left running — not your bill.")
+        self._cost_label.setToolTip("Rough list-price estimate, not your actual bill.")
         self._progress = QProgressBar()
         self._progress.setRange(0, 100)
         self._progress.setFixedWidth(220)
@@ -189,9 +191,7 @@ class CloudWorkspace(QWidget):
 
     def _build_guide_page(self) -> QWidget:
         label = QLabel(
-            f"<h2>Get started with {self.provider.long_label}</h2>"
-            "<p style='color:#5B6B82'>Connect on the left — the guide below explains every "
-            "option.</p>" + guide_html(self.provider)
+            guide_html(self.provider)
         )
         label.setObjectName("guide")
         label.setWordWrap(True)
@@ -218,18 +218,17 @@ class CloudWorkspace(QWidget):
         inner = QVBoxLayout(card)
         inner.setContentsMargins(32, 28, 32, 28)
         inner.setSpacing(12)
-        title = QLabel("You're connected 🎉")
+        title = QLabel("Connected")
         title.setObjectName("welcomeTitle")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         body = QLabel(
-            "Pick the regions you used in the panel on the left (one region is fastest), "
-            "then scan. AI & ML services — like SageMaker, Bedrock, Azure OpenAI and Vertex AI "
-            "— are included and get their own tab."
+            "Pick the regions you used on the left, then scan. "
+            "AI services like SageMaker, Bedrock, Azure OpenAI and Vertex AI are included."
         )
         body.setObjectName("welcomeBody")
         body.setWordWrap(True)
         body.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._ready_scan_btn = QPushButton("▶  Scan")
+        self._ready_scan_btn = QPushButton("Scan")
         self._ready_scan_btn.setObjectName("primary")
         self._ready_scan_btn.setMinimumHeight(44)
         self._ready_scan_btn.clicked.connect(self._on_scan)
@@ -242,34 +241,47 @@ class CloudWorkspace(QWidget):
     def _build_results_page(self) -> QWidget:
         splitter = QSplitter(Qt.Orientation.Horizontal)
         splitter.setChildrenCollapsible(False)
+        left = QWidget()
+        left_layout = QVBoxLayout(left)
+        left_layout.setContentsMargins(0, 0, 0, 0)
+        left_layout.setSpacing(6)
+        bar = QHBoxLayout()
+        self._select_all = QCheckBox("Select all")
+        self._select_all.clicked.connect(self._on_select_all)
+        self._checked_label = QLabel("")
+        self._checked_label.setObjectName("muted")
+        bar.addWidget(self._select_all)
+        bar.addSpacing(10)
+        bar.addWidget(self._checked_label)
+        bar.addStretch()
+        left_layout.addLayout(bar)
         self._table = QTableWidget(0, len(TABLE_COLUMNS))
         self._table.setHorizontalHeaderLabels(TABLE_COLUMNS)
         self._table.setAlternatingRowColors(True)
         self._table.setShowGrid(False)
         self._table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-        self._table.setSelectionMode(QTableWidget.SelectionMode.ExtendedSelection)
+        self._table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
         self._table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self._table.setSortingEnabled(True)
         self._table.verticalHeader().setVisible(False)
         header = self._table.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         header.setStretchLastSection(True)
-        for name, width in (("Region", 96), ("Service", 104), ("Type", 140), ("Name", 170),
-                            ("Status", 110), ("Est. $/mo", 92), ("Linked", 60),
-                            ("On delete", 84), ("Details", 260)):
-            self._table.setColumnWidth(TABLE_COLUMNS.index(name), width)
-        self._table.setItemDelegateForColumn(
-            TABLE_COLUMNS.index("Est. $/mo"), _NumberDelegate(True, self._table))
-        self._table.setItemDelegateForColumn(
-            TABLE_COLUMNS.index("Linked"), _NumberDelegate(False, self._table))
-        self._table.itemSelectionChanged.connect(self._on_selection)
+        for col, width in enumerate((34, 180, 140, 104, 96, 104, 76, 54, 240)):
+            self._table.setColumnWidth(col, width)
+        header.setSectionResizeMode(_CHECK, QHeaderView.ResizeMode.Fixed)
+        self._table.setItemDelegateForColumn(_COST, _NumberDelegate(True, self._table))
+        self._table.setItemDelegateForColumn(_LINKS, _NumberDelegate(False, self._table))
+        self._table.itemSelectionChanged.connect(self._refresh_map)
+        self._table.itemChanged.connect(self._on_item_changed)
+        left_layout.addWidget(self._table)
         self._impact = ImpactPanel()
-        self._impact.setMinimumWidth(300)
-        splitter.addWidget(self._table)
+        self._impact.setMinimumWidth(320)
+        splitter.addWidget(left)
         splitter.addWidget(self._impact)
         splitter.setStretchFactor(0, 1)
         splitter.setStretchFactor(1, 0)
-        splitter.setSizes([760, 360])
+        splitter.setSizes([560, 600])
         return splitter
 
     # ------------------------------------------------------------- connect
@@ -296,9 +308,9 @@ class CloudWorkspace(QWidget):
             return
         browser = config.method == AuthMethod.BROWSER
         self.connect_panel.set_busy(
-            "Opening your browser to sign in…" if browser else "Checking your credentials…"
+            "Opening your browser..." if browser else "Checking your credentials..."
         )
-        self.status_message.emit(f"Connecting to {self.provider.label}…")
+        self.status_message.emit(f"Connecting to {self.provider.label}...")
         worker = AuthWorker(config)
         self._auth_worker = worker
         self._start(worker, {
@@ -324,9 +336,7 @@ class CloudWorkspace(QWidget):
         self.connect_panel.set_connected(result)
         self._stack.setCurrentIndex(_PAGE_READY)
         self.state_changed.emit(self.provider, True)
-        self.status_message.emit(
-            f"Connected to {self.provider.label} — choose regions and press Scan"
-        )
+        self.status_message.emit(f"Connected to {self.provider.label}")
 
     def _set_session(self, session: ProviderSession) -> None:
         self._session = session
@@ -340,7 +350,7 @@ class CloudWorkspace(QWidget):
     def _on_switch(self, key: str) -> None:
         if not self._connect_result or self._busy:
             return
-        self.connect_panel.update_session_label("Switching…")
+        self.connect_panel.update_session_label("Switching...")
         self._start(SwitchWorker(self._connect_result, key), {
             "switched": self._on_switched,
             "error": self._on_switch_error,
@@ -375,11 +385,11 @@ class CloudWorkspace(QWidget):
     def _update_scan_label(self) -> None:
         regions = self.connect_panel.region_panel.selected_regions()
         if not regions:
-            label = "▶  Scan (pick regions first)"
+            label = "Scan"
         elif len(regions) == 1:
-            label = f"▶  Scan {regions[0]}"
+            label = f"Scan {regions[0]}"
         else:
-            label = f"▶  Scan {len(regions)} regions"
+            label = f"Scan {len(regions)} regions"
         enabled = bool(self._session) and bool(regions) and not self._busy
         for button in (self._scan_btn, self._ready_scan_btn):
             button.setText(label)
@@ -395,8 +405,10 @@ class CloudWorkspace(QWidget):
     def _clear_results(self) -> None:
         self._resources = []
         self._by_key.clear()
+        self._checked.clear()
         self._table.setRowCount(0)
         self._impact.show_resources([])
+        self._update_checked_label()
         self._warning.setVisible(False)
         self._count_label.setText("")
         self._cost_label.setText("")
@@ -413,11 +425,11 @@ class CloudWorkspace(QWidget):
         self._failed_checks = 0
         self._set_busy(True)
         self._progress.setValue(0)
-        self._activity.setText(f"Scanning {len(regions)} region(s)…")
+        self._activity.setText(f"Scanning {len(regions)} region(s)...")
         self._activity.setVisible(True)
         self._tabs.setVisible(True)
         self._stack.setCurrentIndex(_PAGE_RESULTS)
-        self.status_message.emit("Scanning — results appear as they are found")
+        self.status_message.emit("Scanning...")
         self._start(ScanWorker(self._session, regions), {
             "progress": self._on_scan_progress,
             "scanned": self._on_scan_finished,
@@ -432,8 +444,8 @@ class CloudWorkspace(QWidget):
         self._failed_checks = progress.failed_checks
         if progress.failed_checks:
             self._warning.setText(
-                f"⚠ {progress.failed_checks} check(s) couldn't run (often missing permissions "
-                "or a service not used in that region). Results may be incomplete."
+                f"{progress.failed_checks} check(s) couldn't run, usually missing permissions. "
+                "Results may be incomplete."
                 + (f"\nLatest: {progress.last_error}" if progress.last_error else "")
             )
             self._warning.setVisible(True)
@@ -441,18 +453,18 @@ class CloudWorkspace(QWidget):
             self._add_rows(progress.new_resources)
 
     def _on_scan_finished(self, resources: list[CloudResource]) -> None:
-        # The final list carries cross-links (e.g. vector store ↔ knowledge base).
+        # The final list carries cross-links, e.g. vector store and knowledge base.
         self._clear_results_keep_banners()
         self._add_rows(resources)
         self._set_busy(False)
         self._activity.setVisible(False)
         found = len(resources)
         self.status_message.emit(
-            f"Scan complete — {found} resource(s) found"
+            f"Scan complete, {found} resource(s) found"
             + (f", {self._failed_checks} check(s) unavailable" if self._failed_checks else "")
         )
         if not found:
-            self._count_label.setText("Nothing billable found in the selected regions 🎉")
+            self._count_label.setText("Nothing found in the selected regions")
 
     def _clear_results_keep_banners(self) -> None:
         self._resources = []
@@ -467,12 +479,14 @@ class CloudWorkspace(QWidget):
     # --------------------------------------------------------------- table
     def _add_rows(self, resources: list[CloudResource]) -> None:
         self._table.setSortingEnabled(False)
+        self._table.blockSignals(True)
         for resource in resources:
             if resource.display_key in self._by_key:
                 continue
             self._resources.append(resource)
             self._by_key[resource.display_key] = resource
             self._insert_row(resource)
+        self._table.blockSignals(False)
         self._table.setSortingEnabled(True)
         self._export_btn.setEnabled(bool(self._resources))
         self._update_tab_counts()
@@ -483,30 +497,41 @@ class CloudWorkspace(QWidget):
         row = self._table.rowCount()
         self._table.insertRow(row)
         cost = estimate_monthly_cost(resource)
-        linked = sum(1 for _ in impact_tree(resource).walk()) - 1
-        action = root_action(resource)
+        links = sum(1 for _ in impact_tree(resource).walk()) - 1
         values = [
-            resource.region, resource.service, resource.resource_type,
+            "",
             resource.name or resource.resource_id.rsplit("/", 1)[-1],
-            resource.status,
-            format_monthly_cost(cost),
-            str(linked) if linked else "—",
-            "🔒 Locked" if not resource.deletable else action.label.split(" ")[0],
+            resource.resource_type,
+            resource.service,
+            resource.region,
+            resource.status if resource.deletable else f"{resource.status} (locked)",
+            "",
+            "",
             resource.details,
         ]
         for col, value in enumerate(values):
             item = QTableWidgetItem(value)
             item.setData(Qt.ItemDataRole.UserRole, resource.display_key)
-            item.setToolTip(f"ID: {resource.resource_id}" if col == 3 else value)
-            if col == TABLE_COLUMNS.index("Est. $/mo"):
+            item.setToolTip(value)
+            if col == _CHECK:
+                if resource.deletable:
+                    item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+                    item.setCheckState(
+                        Qt.CheckState.Checked if resource.display_key in self._checked
+                        else Qt.CheckState.Unchecked
+                    )
+                else:
+                    item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
+            elif col == _NAME:
+                item.setToolTip(resource.resource_id)
+            elif col == _COST:
                 item.setData(Qt.ItemDataRole.DisplayRole, float(cost) if cost is not None else -1.0)
                 item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-            if col == TABLE_COLUMNS.index("Linked"):
-                item.setData(Qt.ItemDataRole.DisplayRole, linked)
-            if col == TABLE_COLUMNS.index("On delete"):
-                color = "#94A3B8" if not resource.deletable else ACTION_COLORS[action.value]
-                item.setForeground(QBrush(QColor(color)))
+            elif col == _LINKS:
+                item.setData(Qt.ItemDataRole.DisplayRole, links)
+                item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             if not resource.deletable:
+                item.setForeground(QBrush(QColor("#94A3B8")))
                 item.setToolTip(resource.extra.get("impact_note") or "In use or protected")
             self._table.setItem(row, col, item)
 
@@ -549,46 +574,81 @@ class CloudWorkspace(QWidget):
     def _update_cost(self) -> None:
         priced = [c for c in (estimate_monthly_cost(r) for r in self._resources) if c is not None]
         if priced:
-            self._cost_label.setText(f"≈ ${sum(priced):,.2f}/month if everything keeps running")
+            self._cost_label.setText(f"about ${sum(priced):,.0f}/month")
         else:
             self._cost_label.setText("")
 
-    def _selected(self) -> list[CloudResource]:
-        keys: list[str] = []
-        for index in self._table.selectionModel().selectedRows():
-            key = self._row_key(index.row())
-            if key and key not in keys and not self._table.isRowHidden(index.row()):
-                keys.append(key)
-        return [self._by_key[k] for k in keys if k in self._by_key]
+    def _checked_resources(self) -> list[CloudResource]:
+        return [r for r in self._resources if r.display_key in self._checked]
 
-    def _on_selection(self) -> None:
-        self._impact.show_resources(self._selected())
+    def _current_resource(self) -> CloudResource | None:
+        row = self._table.currentRow()
+        if row < 0 or self._table.isRowHidden(row):
+            return None
+        return self._by_key.get(self._row_key(row) or "")
+
+    def _on_item_changed(self, item: QTableWidgetItem) -> None:
+        if item.column() != _CHECK:
+            return
+        key = item.data(Qt.ItemDataRole.UserRole)
+        if item.checkState() == Qt.CheckState.Checked:
+            self._checked.add(key)
+        else:
+            self._checked.discard(key)
+        self._update_checked_label()
+        self._refresh_map()
+
+    def _on_select_all(self, checked: bool) -> None:
+        state = Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked
+        self._table.blockSignals(True)
+        for row in range(self._table.rowCount()):
+            item = self._table.item(row, _CHECK)
+            if self._table.isRowHidden(row) or not item:
+                continue
+            if item.flags() & Qt.ItemFlag.ItemIsUserCheckable:
+                item.setCheckState(state)
+                key = item.data(Qt.ItemDataRole.UserRole)
+                if checked:
+                    self._checked.add(key)
+                else:
+                    self._checked.discard(key)
+        self._table.blockSignals(False)
+        self._update_checked_label()
+        self._refresh_map()
+
+    def _update_checked_label(self) -> None:
+        n = len(self._checked)
+        self._checked_label.setText(f"{n} selected" if n else "")
+        if not n:
+            self._select_all.setChecked(False)
         self._update_delete_button()
 
+    def _refresh_map(self) -> None:
+        """Show ticked resources; with nothing ticked, preview the clicked row."""
+        shown = self._checked_resources()
+        if not shown:
+            current = self._current_resource()
+            shown = [current] if current else []
+        self._impact.show_resources(shown)
+
     def _update_delete_button(self) -> None:
-        selected = self._selected() if hasattr(self, "_table") else []
-        deletable = [r for r in selected if r.deletable]
-        ok = bool(selected) and len(deletable) == len(selected) and not self._busy
-        self._delete_btn.setEnabled(ok)
-        only_stop = selected and all(root_action(r) == Action.STOP for r in selected)
+        checked = self._checked_resources() if hasattr(self, "_table") else []
+        self._delete_btn.setEnabled(bool(checked) and not self._busy)
+        only_stop = checked and all(root_action(r) == Action.STOP for r in checked)
         verb = "Stop" if only_stop else "Delete"
-        self._delete_btn.setText(f"{verb} {len(selected)} selected" if selected
-                                 else "Delete selected")
-        self._delete_btn.setToolTip(
-            "" if ok or not selected else "Some selected items are locked (in use or protected)."
-        )
+        self._delete_btn.setText(f"{verb} {len(checked)}" if checked else "Delete")
 
     # -------------------------------------------------------------- delete
     def _on_delete(self) -> None:
-        selected = [r for r in self._selected() if r.deletable]
+        selected = [r for r in self._checked_resources() if r.deletable]
         if not selected or not self._session or self._busy:
             return
         if DeleteConfirmDialog(selected, self).exec() != DeleteConfirmDialog.DialogCode.Accepted:
             return
         self._set_busy(True)
         self._progress.setRange(0, 0)
-        self._activity.setText("Deleting… long cascades (e.g. SageMaker domains) can take "
-                               "several minutes.")
+        self._activity.setText("Deleting. Some resources, like SageMaker domains, take a few "
+                               "minutes.")
         self._activity.setVisible(True)
         self._failures: list[str] = []
         self._start(DeleteWorker(self._session, selected), {
@@ -605,6 +665,7 @@ class CloudWorkspace(QWidget):
     def _on_resource_deleted(self, key: str) -> None:
         self._resources = [r for r in self._resources if r.display_key != key]
         self._by_key.pop(key, None)
+        self._checked.discard(key)
         for row in range(self._table.rowCount()):
             if self._row_key(row) == key:
                 self._table.removeRow(row)
@@ -616,22 +677,23 @@ class CloudWorkspace(QWidget):
     def _on_resource_failed(self, key: str, error: str) -> None:
         resource = self._by_key.get(key)
         name = (resource.name or resource.resource_id) if resource else key
-        self._failures.append(f"• {name}: {error}")
+        self._failures.append(f"{name}: {error}")
 
     def _on_delete_finished(self) -> None:
         self._progress.setRange(0, 100)
         self._set_busy(False)
         self._activity.setVisible(False)
-        self._on_selection()
+        self._update_checked_label()
+        self._refresh_map()
         if self._failures:
             QMessageBox.warning(
                 self, "Some items were not deleted",
                 "\n\n".join(self._failures[:10])
-                + "\n\nTip: check permissions, or wait a minute and run Scan again.",
+                + "\n\nCheck your permissions, or wait a minute and scan again.",
             )
             self.status_message.emit("Delete finished with errors")
         else:
-            self.status_message.emit("Delete complete — scan again in a few minutes to confirm")
+            self.status_message.emit("Done. Scan again in a few minutes to confirm.")
 
     # -------------------------------------------------------------- export
     def _on_export(self) -> None:

@@ -37,7 +37,7 @@ def demo_resources() -> list[CloudResource]:
               dep("EFS file system (home folders)", "fs-0a1b2c3d",
                   note="all notebooks and files in Studio home folders"),
               dep("IAM execution role", "AmazonSageMaker-ExecutionRole", Action.KEEP,
-                  "free — remove in IAM if nothing else uses it"),
+                  "free - remove in IAM if nothing else uses it"),
           ]),
         r("SageMaker", "Endpoint", "llm-endpoint", "llm-endpoint", "InService",
           "1× ml.g5.2xlarge", monthly_cost=1106.0,
@@ -45,7 +45,7 @@ def demo_resources() -> list[CloudResource]:
                           children=[dep("Model", "llama-3-8b", note="artifacts in S3 are kept")]),
                       dep("CloudWatch log group", "/aws/sagemaker/Endpoints/llm-endpoint")]),
         r("SageMaker", "Training Job", "bert-finetune-0412", "bert-finetune-0412", "InProgress",
-          "RUNNING — billing now", delete_action="delete",
+          "RUNNING - billing now", delete_action="delete",
           impact_note="stopped first, then its record is deleted",
           dependents=[dep("Model artifacts in S3", "output path", Action.KEEP)]),
         r("Bedrock", "Knowledge Base", "KB12345", "course-notes-kb", "ACTIVE",
@@ -58,7 +58,7 @@ def demo_resources() -> list[CloudResource]:
         r("Bedrock", "Provisioned Throughput", "arn:pt/claude", "claude-sonnet-pt", "InService",
           "1 model unit of anthropic.claude-sonnet, no commitment", monthly_cost=14600.0),
         r("Bedrock", "Agent", "AGENT01", "study-buddy-agent", "PREPARED",
-          "model anthropic.claude-haiku — pay per use", monthly_cost=0.0,
+          "model anthropic.claude-haiku - pay per use", monthly_cost=0.0,
           dependents=[dep("Alias", "prod"), dep("Action group", "lookup-grades")]),
         r("EC2", "Instance", "i-0abc12345", "jupyter-box", "running", "Type: t3.large",
           dependents=[dep("EBS volume", "vol-0123", note="/dev/xvda")]),
@@ -86,7 +86,7 @@ def main(out_dir: str) -> None:
     session = ProviderSession(CloudProvider.AWS, object(), "123456789012",
                               "arn:aws:iam::123456789012:user/student")
     result = ConnectResult(session, "Account / role",
-                           [Choice("123456789012|Admin", "Lab account (123456789012) — Admin")])
+                           [Choice("123456789012|Admin", "Lab account (123456789012) - Admin")])
     ws._session = session
     ws._connect_result = result
     ws.connect_panel.set_connected(result)
@@ -100,10 +100,12 @@ def main(out_dir: str) -> None:
     ws._update_scan_label()
     window._on_state_changed(CloudProvider.AWS, True)
     ws._tabs.setCurrentIndex(1)  # AI & ML
-    ws._table.sortItems(0)
+    ws._table.sortItems(1)
+    from PySide6.QtCore import Qt
+
     for row in range(ws._table.rowCount()):
-        if ws._table.item(row, 3).text() == "ml-class-domain":
-            ws._table.selectRow(row)
+        if ws._table.item(row, 1).text() == "ml-class-domain":
+            ws._table.item(row, 0).setCheckState(Qt.CheckState.Checked)
     app.processEvents()
     window.grab().save(str(out / "ai-impact-map.png"))
     print("saved to", out)

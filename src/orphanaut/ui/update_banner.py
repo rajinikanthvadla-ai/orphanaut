@@ -118,7 +118,7 @@ class UpdateBanner(QFrame):
             return
         self._release = release
         self._text.setText(
-            f"🎉  <b>Orphanaut {release.version}</b> is available — you have {__version__}."
+            f"<b>Orphanaut {release.version}</b> is available - you have {__version__}."
         )
         self._action_btn.setText(updater.update_action_label(release))
         self._action_btn.setEnabled(True)
@@ -155,7 +155,7 @@ class UpdateBanner(QFrame):
         self._notes_btn.setEnabled(False)
         self._progress.setRange(0, 0)
         self._progress.setVisible(True)
-        self._text.setText(f"Downloading Orphanaut {self._release.version}…")
+        self._text.setText(f"Downloading Orphanaut {self._release.version}...")
         self._download = DownloadWorker(asset)
         self._start(self._download, {
             "progress": self._on_progress,
@@ -179,11 +179,11 @@ class UpdateBanner(QFrame):
             self._on_download_error(f"Could not start the update: {exc}")
             return
         if path.lower().endswith(".exe"):
-            self._text.setText("Installing the update — Orphanaut will reopen by itself.")
+            self._text.setText("Installing the update - Orphanaut will reopen by itself.")
             QApplication.instance().quit()
         else:
             self._text.setText(
-                "The new version is open in Finder — quit Orphanaut, then drag it into "
+                "The new version is open in Finder - quit Orphanaut, then drag it into "
                 "Applications and replace the old one."
             )
 

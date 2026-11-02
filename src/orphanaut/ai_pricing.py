@@ -1,7 +1,7 @@
 """Rough hourly prices for AI/ML instances and units (US East list prices).
 
 Like the rest of Orphanaut's estimates these only show the scale of what a
-forgotten resource costs — they are not a bill.
+forgotten resource costs - they are not a bill.
 """
 
 from __future__ import annotations
@@ -54,7 +54,7 @@ _FAMILY_PER_LARGE = {
 
 
 def ml_instance_hourly(instance_type: str) -> float | None:
-    """``ml.g5.xlarge`` → ~1.41 USD/hour. Unknown types return None."""
+    """``ml.g5.xlarge`` > ~1.41 USD/hour. Unknown types return None."""
     parts = instance_type.lower().removeprefix("ml.").split(".")
     if len(parts) != 2:
         return None

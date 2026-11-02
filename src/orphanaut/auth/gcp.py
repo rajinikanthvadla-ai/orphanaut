@@ -1,7 +1,7 @@
 """Google Cloud authentication.
 
 * Service account JSON key (pasted or picked from a file).
-* Browser sign-in with your Google account — runs
+* Browser sign-in with your Google account - runs
   ``gcloud auth application-default login`` which opens the browser.
 * A login that already exists on this computer (Application Default
   Credentials from gcloud, or ``GOOGLE_APPLICATION_CREDENTIALS``).
@@ -66,7 +66,7 @@ def detect_local_gcp() -> str:
     """Return a short description of existing Google credentials, or ''."""
     if adc_path().exists():
         project = gcloud_default_project()
-        return "Application Default Credentials" + (f" — {project}" if project else "")
+        return "Application Default Credentials" + (f" - {project}" if project else "")
     return ""
 
 
@@ -80,7 +80,7 @@ def run_gcloud_browser_login() -> None:
     if not gcloud:
         raise AuthenticationError(
             "Browser sign-in for Google Cloud uses the gcloud CLI, which isn't installed.\n\n"
-            f"Install it from {GCLOUD_INSTALL_URL} and try again — or use a service "
+            f"Install it from {GCLOUD_INSTALL_URL} and try again - or use a service "
             "account JSON key instead."
         )
     try:

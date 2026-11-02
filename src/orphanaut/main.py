@@ -31,7 +31,7 @@ def _show_startup_error(log_path: Path, detail: str) -> None:
                 "Windows tips:\n"
                 "• Use the installer, or extract the whole zip and run Orphanaut.exe\n"
                 "• Use a folder like C:\\Orphanaut (not inside the zip)\n"
-                "• If blocked, open Windows Security → Protection history → Allow\n\n"
+                "• If blocked, open Windows Security > Protection history > Allow\n\n"
                 f"{detail[:400]}"
             ),
         )

@@ -13,7 +13,7 @@ from orphanaut.scanners.base import BaseScanner
 
 _GONE = {"Deleted", "Deleting", "Failed", "Delete_Failed"}
 _JOB_RUNNING = {"InProgress", "Stopping"}
-# How many finished jobs per type to list (newest first) — keeps scans quick.
+# How many finished jobs per type to list (newest first) - keeps scans quick.
 _MAX_FINISHED_JOBS = 200
 
 
@@ -114,7 +114,7 @@ class SageMakerStudioScanner(BaseScanner):
                         "IAM execution role",
                         role.rsplit("/", 1)[-1],
                         Action.KEEP,
-                        "free — remove in IAM if nothing else uses it",
+                        "free - remove in IAM if nothing else uses it",
                     )
                 )
             dependents.append(
@@ -122,7 +122,7 @@ class SageMakerStudioScanner(BaseScanner):
                     "VPC security groups for Studio",
                     domain_id,
                     Action.KEEP,
-                    "free — created by SageMaker, remove in VPC console if left over",
+                    "free - created by SageMaker, remove in VPC console if left over",
                 )
             )
 
@@ -157,7 +157,7 @@ class SageMakerStudioScanner(BaseScanner):
                         f"{domain_id}/{owner}/{app['AppType']}/{app['AppName']}",
                         app["AppName"],
                         app.get("Status", ""),
-                        f"{app['AppType']} on {instance or 'default'} — owner {owner}",
+                        f"{app['AppType']} on {instance or 'default'} - owner {owner}",
                         domain_id=domain_id,
                         app_type=app["AppType"],
                         app_name=app["AppName"],
@@ -248,7 +248,7 @@ class SageMakerEndpointScanner(BaseScanner):
             dependents.append(
                 dep(
                     "Model artifacts / data capture in S3",
-                    "s3://…",
+                    "s3://...",
                     Action.KEEP,
                     "your S3 data is never touched",
                 )
@@ -317,7 +317,7 @@ class SageMakerEndpointScanner(BaseScanner):
                     dependents=[
                         dep(
                             "Model artifacts in S3",
-                            "s3://…",
+                            "s3://...",
                             Action.KEEP,
                             "your S3 data is never touched",
                         )
@@ -353,7 +353,7 @@ class SageMakerNotebookScanner(BaseScanner):
                         "Lifecycle config",
                         nb["NotebookInstanceLifecycleConfigName"],
                         Action.KEEP,
-                        "free — may be shared",
+                        "free - may be shared",
                     )
                 )
             running = status in {"InService", "Pending", "Updating"}
@@ -471,7 +471,7 @@ class SageMakerJobScanner(BaseScanner):
                     action = Action.DELETE if deletable else Action.STOP
                     note = "stopped first, then its record is deleted" if deletable else ""
                 else:
-                    action, note = Action.DELETE, "only the job record — it is not running"
+                    action, note = Action.DELETE, "only the job record - it is not running"
                 resources.append(
                     _resource(
                         self.region,
@@ -479,7 +479,7 @@ class SageMakerJobScanner(BaseScanner):
                         name,
                         name,
                         status,
-                        ("RUNNING — billing now" if running else "finished")
+                        ("RUNNING - billing now" if running else "finished")
                         + (f", warm pool {warm_pool}" if warm_pool else ""),
                         job_name=name,
                         job_kind=rtype,
@@ -527,7 +527,7 @@ class SageMakerPlatformScanner(BaseScanner):
                     dependents=[
                         dep(
                             "Artifact store in S3",
-                            "s3://…",
+                            "s3://...",
                             Action.KEEP,
                             "your experiment artifacts stay in S3",
                         )
@@ -569,7 +569,7 @@ class SageMakerPlatformScanner(BaseScanner):
                         dep("Online store records", name, note="online store billing stops"),
                         dep(
                             "Offline store data in S3",
-                            "s3://…",
+                            "s3://...",
                             Action.KEEP,
                             "your S3 data is never touched",
                         ),

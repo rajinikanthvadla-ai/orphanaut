@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 from PySide6.QtCore import QRectF, Qt
-from PySide6.QtGui import QBrush, QColor, QFont, QIcon, QLinearGradient, QPainter, QPen, QPixmap
+from PySide6.QtGui import QBrush, QColor, QIcon, QLinearGradient, QPainter, QPen, QPixmap
 
 from orphanaut.models import CloudProvider
-from orphanaut.ui.styles import COLORS, PROVIDER_COLORS
-
-_LETTERS = {CloudProvider.AWS: "aws", CloudProvider.AZURE: "Az", CloudProvider.GCP: "G"}
+from orphanaut.ui.logos import render_logo
+from orphanaut.ui.styles import COLORS
 
 
 def app_pixmap(size: int = 256) -> QPixmap:
@@ -47,27 +46,13 @@ def app_icon() -> QIcon:
 
 
 def cloud_icon(provider: CloudProvider, connected: bool, size: int = 40) -> QIcon:
-    """Provider-coloured tile with its initials and a status dot."""
-    pixmap = QPixmap(size, size)
-    pixmap.fill(Qt.GlobalColor.transparent)
+    """Provider logo with a small green (connected) or grey status dot."""
+    pixmap = render_logo(provider, size, size)
     p = QPainter(pixmap)
     p.setRenderHint(QPainter.RenderHint.Antialiasing)
-    color = QColor(PROVIDER_COLORS[provider])
-    if provider == CloudProvider.AWS:
-        color = QColor("#232F3E")
-    p.setBrush(color)
-    p.setPen(Qt.PenStyle.NoPen)
-    p.drawRoundedRect(QRectF(0, 0, size * 0.86, size * 0.86), size * 0.2, size * 0.2)
-    font = QFont()
-    font.setBold(True)
-    font.setPixelSize(int(size * (0.30 if provider == CloudProvider.AWS else 0.38)))
-    p.setFont(font)
-    p.setPen(QColor("#FF9900") if provider == CloudProvider.AWS else QColor("#FFFFFF"))
-    p.drawText(QRectF(0, 0, size * 0.86, size * 0.86), Qt.AlignmentFlag.AlignCenter,
-               _LETTERS[provider])
-    dot = size * 0.34
-    p.setBrush(QColor(COLORS["success"] if connected else "#B9C2D0"))
+    dot = size * 0.3
+    p.setBrush(QColor(COLORS["success"] if connected else "#C3CAD6"))
     p.setPen(QPen(QColor("#FFFFFF"), size * 0.06))
-    p.drawEllipse(QRectF(size - dot, size - dot, dot - 1, dot - 1))
+    p.drawEllipse(QRectF(size - dot - 1, size - dot - 1, dot, dot))
     p.end()
     return QIcon(pixmap)

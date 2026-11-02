@@ -1,5 +1,5 @@
 """Azure AI scanners: Azure OpenAI / AI Services, Machine Learning (incl. AI Foundry hubs)
-and AI Search — all through ARM REST so no extra SDKs are needed."""
+and AI Search - all through ARM REST so no extra SDKs are needed."""
 
 from __future__ import annotations
 
@@ -280,7 +280,7 @@ class AzureMachineLearningScanner(_AzureAiScanner):
                 else:
                     exclusive.append(linked)
                     dependents.append(
-                        dep(kind_label, name, note="created with the workspace — all its data")
+                        dep(kind_label, name, note="created with the workspace - all its data")
                     )
             resources.append(
                 self._resource(
@@ -347,7 +347,7 @@ class AzureAiSearchScanner(_AzureAiScanner):
                         "dependents": [
                             dep("Indexes, indexers, skillsets and data sources", "all"),
                             dep(
-                                "Source data (Blob, Cosmos DB…)",
+                                "Source data (Blob, Cosmos DB...)",
                                 "kept",
                                 Action.KEEP,
                                 "only the search copy is removed",

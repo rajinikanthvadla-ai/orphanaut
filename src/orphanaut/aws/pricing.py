@@ -1,7 +1,7 @@
 """Rough monthly cost estimates for discovered AWS resources.
 
 These are approximate on-demand list prices (roughly US East pricing) meant
-to give students a sense of scale for cost-conscious cleanup — this is NOT a
+to give students a sense of scale for cost-conscious cleanup - this is NOT a
 substitute for AWS Cost Explorer or your actual bill. Real costs vary by
 region, usage, discounts, savings plans, and data transfer, none of which
 are visible from a resource listing alone.
@@ -167,7 +167,7 @@ def estimate_monthly_cost(resource: AwsResource) -> float | None:
 def format_monthly_cost(cost: float | None) -> str:
     """Format an estimated monthly cost for display in the UI/CSV export."""
     if cost is None:
-        return "—"
+        return "-"
     if cost == 0:
         return "$0.00"
     return f"${cost:,.2f}/mo"

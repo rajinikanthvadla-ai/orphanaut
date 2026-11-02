@@ -87,7 +87,7 @@ class BedrockKnowledgeBaseScanner(BaseScanner):
                 dep(
                     "Data source",
                     s.get("name", s["dataSourceId"]),
-                    note="sync settings only — documents in S3 are kept",
+                    note="sync settings only - documents in S3 are kept",
                 )
                 for s in sources
             ]
@@ -115,7 +115,7 @@ class BedrockKnowledgeBaseScanner(BaseScanner):
                         dep(
                             "OpenSearch Serverless collection (vector store)",
                             collection_id,
-                            note=f"the main cost — ~${_OSS_MIN_MONTHLY:,.0f}+/mo minimum",
+                            note=f"the main cost - ~${_OSS_MIN_MONTHLY:,.0f}+/mo minimum",
                             children=[dep("Vector index", index or "embeddings")],
                         )
                     )
@@ -207,7 +207,7 @@ class BedrockAgentScanner(BaseScanner):
                         dep(
                             "Knowledge base link",
                             link["knowledgeBaseId"],
-                            note="only the link — the knowledge base is kept",
+                            note="only the link - the knowledge base is kept",
                         )
                     )
             except ClientError:
@@ -220,7 +220,7 @@ class BedrockAgentScanner(BaseScanner):
                     agent_id,
                     summary.get("agentName", ""),
                     summary.get("agentStatus", ""),
-                    f"model {_short_model(model) or 'n/a'} — pay per use",
+                    f"model {_short_model(model) or 'n/a'} - pay per use",
                     agent_id=agent_id,
                     dependents=dependents,
                     monthly_cost=0.0,
@@ -263,7 +263,7 @@ class BedrockModelScanner(BaseScanner):
                     + (f", {commitment} commitment" if committed else ", no commitment"),
                     provisioned_model_arn=pt["provisionedModelArn"],
                     impact_note=(
-                        "committed term — AWS only allows deleting it after the commitment ends"
+                        "committed term - AWS only allows deleting it after the commitment ends"
                     )
                     if committed
                     else "",
@@ -279,7 +279,7 @@ class BedrockModelScanner(BaseScanner):
                 dep(
                     "Provisioned throughput",
                     p.get("provisionedModelName", ""),
-                    note="must go first — it serves this model",
+                    note="must go first - it serves this model",
                 )
                 for p in pts_by_model.get(arn, [])
             ]
@@ -298,7 +298,7 @@ class BedrockModelScanner(BaseScanner):
                     + [
                         dep(
                             "Training data in S3",
-                            "s3://…",
+                            "s3://...",
                             Action.KEEP,
                             "your S3 data is never touched",
                         )
@@ -321,7 +321,7 @@ class BedrockModelScanner(BaseScanner):
                     dependents=[
                         dep(
                             "Model files in S3",
-                            "s3://…",
+                            "s3://...",
                             Action.KEEP,
                             "your S3 data is never touched",
                         )
@@ -343,7 +343,7 @@ class BedrockModelScanner(BaseScanner):
                     job["jobArn"],
                     job.get("jobName", ""),
                     job.get("status", ""),
-                    f"fine-tuning {_short_model(job.get('baseModelArn', ''))} — billing now",
+                    f"fine-tuning {_short_model(job.get('baseModelArn', ''))} - billing now",
                     job_identifier=job["jobArn"],
                     delete_action=Action.STOP.value,
                     impact_note="the job is stopped; no custom model is produced",
@@ -402,7 +402,7 @@ class OpenSearchServerlessScanner(BaseScanner):
                     c["id"],
                     c.get("name", ""),
                     c.get("status", ""),
-                    f"{ctype.title() or 'Collection'} — billed per OCU-hour",
+                    f"{ctype.title() or 'Collection'} - billed per OCU-hour",
                     collection_id=c["id"],
                     collection_arn=c.get("arn", ""),
                     dependents=[
@@ -411,7 +411,7 @@ class OpenSearchServerlessScanner(BaseScanner):
                             "Encryption / network / data-access policies",
                             c.get("name", ""),
                             Action.KEEP,
-                            "free — remove in the console if unused",
+                            "free - remove in the console if unused",
                         ),
                     ],
                     monthly_cost=round(_OSS_MIN_MONTHLY, 2),

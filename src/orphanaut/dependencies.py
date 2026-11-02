@@ -28,7 +28,7 @@ class Action(str, Enum):
             case Action.STOP:
                 return "Stopped"
             case Action.KEEP:
-                return "Kept — review"
+                return "Kept"
             case _:
                 return self.value
 
@@ -106,7 +106,7 @@ def impact_text(resources: list[CloudResource], limit: int = 40) -> str:
             return
         indent = "    " * depth
         bullet = "•" if depth == 0 else "└"
-        note = f" — {node.note}" if node.note else ""
+        note = f" - {node.note}" if node.note else ""
         lines.append(f"{indent}{bullet} [{node.action.label}] {node.kind}: {node.name}{note}")
         for child in node.children:
             add(child, depth + 1)
@@ -136,6 +136,6 @@ def link_related(resources: list[CloudResource]) -> None:
                     "Bedrock knowledge base",
                     kb.name or kb.resource_id,
                     Action.KEEP,
-                    "stops working — delete the knowledge base instead to clean up both",
+                    "stops working - delete the knowledge base instead to clean up both",
                 ),
             )

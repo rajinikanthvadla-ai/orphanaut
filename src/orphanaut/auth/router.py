@@ -78,7 +78,7 @@ def _connect_aws_browser(
     login.wait(should_cancel)
     roles = login.account_roles()
     choices = [
-        Choice(f"{account_id}|{role}", f"{name} ({account_id}) — {role}")
+        Choice(f"{account_id}|{role}", f"{name} ({account_id}) - {role}")
         for account_id, name, role in roles
     ]
     preferred = f"{config.sso_account_id}|{config.sso_role_name}"
@@ -97,7 +97,7 @@ def connect(
     on_device_code: Callable[[DeviceCode], None] | None = None,
     should_cancel: Callable[[], bool] = lambda: False,
 ) -> ConnectResult:
-    """Sign in with any supported method. Blocking — run it off the UI thread."""
+    """Sign in with any supported method. Blocking - run it off the UI thread."""
     match config.provider:
         case CloudProvider.AWS:
             if config.method == AuthMethod.BROWSER:

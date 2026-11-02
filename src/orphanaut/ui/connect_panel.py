@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
     QPlainTextEdit,
     QPushButton,
     QScrollArea,
+    QSizePolicy,
     QStackedWidget,
     QVBoxLayout,
     QWidget,
@@ -35,8 +36,8 @@ from orphanaut.auth.gcp import GCLOUD_INSTALL_URL, detect_local_gcp, gcloud_path
 from orphanaut.auth.router import ConnectResult
 from orphanaut.aws.regions import COMMON_REGIONS
 from orphanaut.models import AuthConfig, AuthMethod, CloudProvider
+from orphanaut.ui.logos import render_logo
 from orphanaut.ui.region_panel import RegionPanel
-from orphanaut.ui.styles import PROVIDER_COLORS
 
 
 @dataclass
@@ -52,7 +53,7 @@ METHODS: dict[CloudProvider, list[MethodInfo]] = {
         MethodInfo(AuthMethod.ACCESS_KEYS, "Access keys",
                    "Paste an Access Key ID and Secret Access Key", "Connect with keys"),
         MethodInfo(AuthMethod.BROWSER, "Sign in with browser",
-                   "AWS IAM Identity Center (SSO) — no CLI needed", "Sign in with browser"),
+                   "AWS IAM Identity Center (SSO) - no CLI needed", "Sign in with browser"),
         MethodInfo(AuthMethod.LOCAL, "This computer",
                    "Use a profile from aws configure / aws sso login", "Use this login"),
     ],
@@ -107,23 +108,19 @@ class MethodCard(QFrame):
         self.setObjectName("methodCardFrame")
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(12, 9, 12, 9)
-        layout.setSpacing(2)
+        layout.setContentsMargins(12, 8, 12, 8)
+        layout.setSpacing(0)
+        self.setToolTip(info.description)
         top = QHBoxLayout()
         self._title = QLabel(info.title)
-        self._title.setStyleSheet("font-weight: 700; font-size: 14px; background: transparent;")
+        self._title.setStyleSheet("font-weight: 600; font-size: 13px; background: transparent;")
         self._badge = QLabel("")
         self._badge.setObjectName("detectedBadge")
         self._badge.setVisible(False)
         top.addWidget(self._title)
         top.addStretch()
         top.addWidget(self._badge)
-        desc = QLabel(info.description)
-        desc.setObjectName("muted")
-        desc.setWordWrap(True)
-        desc.setStyleSheet("background: transparent;")
         layout.addLayout(top)
-        layout.addWidget(desc)
         self.set_selected(False)
 
     def set_badge(self, text: str) -> None:
@@ -133,13 +130,13 @@ class MethodCard(QFrame):
     def set_selected(self, selected: bool) -> None:
         if selected:
             self.setStyleSheet(
-                "QFrame#methodCardFrame { background: #EEEBFF; border: 2px solid #5B4BDB; "
-                "border-radius: 12px; }"
+                "QFrame#methodCardFrame { background: #EEEBFF; border: 1px solid #5B4BDB; "
+                "border-radius: 8px; }"
             )
         else:
             self.setStyleSheet(
                 "QFrame#methodCardFrame { background: #FFFFFF; border: 1px solid #E2E7F0; "
-                "border-radius: 12px; } QFrame#methodCardFrame:hover { border-color: #CBD3E1; }"
+                "border-radius: 8px; } QFrame#methodCardFrame:hover { border-color: #CBD3E1; }"
             )
 
     def mousePressEvent(self, event) -> None:  # noqa: N802 - Qt API
@@ -177,11 +174,16 @@ class ConnectPanel(QWidget):
         layout.setContentsMargins(16, 16, 16, 16)
         layout.setSpacing(10)
 
-        accent = PROVIDER_COLORS[self.provider]
+        head = QHBoxLayout()
+        logo = QLabel()
+        logo.setPixmap(render_logo(self.provider, 34, 26))
         title = QLabel(self.provider.long_label)
         title.setObjectName("title")
-        title.setStyleSheet(f"border-left: 4px solid {accent}; padding-left: 8px;")
-        layout.addWidget(title)
+        head.addWidget(logo)
+        head.addSpacing(6)
+        head.addWidget(title)
+        head.addStretch()
+        layout.addLayout(head)
 
         self._status = QFrame()
         self._status.setObjectName("statusCard")
@@ -189,7 +191,7 @@ class ConnectPanel(QWidget):
         status_layout.setContentsMargins(12, 10, 12, 10)
         self._status_title = QLabel("Not connected")
         self._status_title.setObjectName("statusTitle")
-        self._status_detail = QLabel("Choose how you want to sign in below.")
+        self._status_detail = QLabel("Choose a sign-in method below.")
         self._status_detail.setObjectName("statusDetail")
         self._status_detail.setWordWrap(True)
         self._status_detail.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
@@ -202,7 +204,7 @@ class ConnectPanel(QWidget):
         signin = QVBoxLayout(self._signin)
         signin.setContentsMargins(0, 0, 0, 0)
         signin.setSpacing(8)
-        signin.addWidget(_section("Step 1 · Choose how to connect"))
+        signin.addWidget(_section("Sign in with"))
         self._forms = QStackedWidget()
         for info in METHODS[self.provider]:
             card = MethodCard(info)
@@ -210,7 +212,6 @@ class ConnectPanel(QWidget):
             self._cards.append(card)
             signin.addWidget(card)
             self._forms.addWidget(self._build_form(info.method))
-        signin.addWidget(_section("Step 2 · Enter details"))
         signin.addWidget(self._forms)
 
         self._device_box = self._build_device_box()
@@ -286,9 +287,9 @@ class ConnectPanel(QWidget):
 
         if p == CloudProvider.AWS and method == AuthMethod.ACCESS_KEYS:
             self._aws_key = QLineEdit()
-            self._aws_key.setPlaceholderText("AKIA…")
+            self._aws_key.setPlaceholderText("AKIA...")
             self._aws_secret, show = _secret("Secret Access Key")
-            self._aws_token, _ = _secret("Only for temporary keys (ASIA…)")
+            self._aws_token, _ = _secret("Only for temporary keys (ASIA...)")
             lay.addWidget(_field("Access Key ID"))
             lay.addWidget(self._aws_key)
             lay.addWidget(_field("Secret Access Key"))
@@ -298,8 +299,8 @@ class ConnectPanel(QWidget):
             lay.addLayout(row)
             lay.addWidget(_field("Session token (optional)"))
             lay.addWidget(self._aws_token)
-            tip = QLabel("Find them in the AWS Console → your name (top right) → "
-                         "Security credentials → Access keys.")
+            tip = QLabel("AWS Console > your name > Security credentials > "
+                         "Security credentials > Access keys.")
             tip.setObjectName("muted")
             tip.setWordWrap(True)
             lay.addWidget(tip)
@@ -307,7 +308,7 @@ class ConnectPanel(QWidget):
         elif p == CloudProvider.AWS and method == AuthMethod.BROWSER:
             self._aws_sso_profile = QComboBox()
             self._aws_sso_profile.currentTextChanged.connect(self._fill_from_sso_profile)
-            self._aws_sso_profile_label = _field("Fill in from a profile on this computer")
+            self._aws_sso_profile_label = _field("Use settings from profile")
             lay.addWidget(self._aws_sso_profile_label)
             lay.addWidget(self._aws_sso_profile)
             self._aws_start_url = QLineEdit()
@@ -332,11 +333,10 @@ class ConnectPanel(QWidget):
 
         elif p == CloudProvider.AZURE and method == AuthMethod.BROWSER:
             self._az_browser_tenant = QLineEdit()
-            self._az_browser_tenant.setPlaceholderText("Optional — only if you have several")
+            self._az_browser_tenant.setPlaceholderText("Optional")
             lay.addWidget(_field("Tenant / directory ID"))
             lay.addWidget(self._az_browser_tenant)
-            note = QLabel("A browser window opens for you to sign in. Afterwards you can pick "
-                          "the subscription to scan.")
+            note = QLabel("Opens a browser window to sign in.")
             note.setObjectName("muted")
             note.setWordWrap(True)
             lay.addWidget(note)
@@ -351,7 +351,7 @@ class ConnectPanel(QWidget):
             self._az_client = QLineEdit()
             self._az_secret, show = _secret("Client secret value")
             self._az_sub = QLineEdit()
-            self._az_sub.setPlaceholderText("Optional — picked after sign-in")
+            self._az_sub.setPlaceholderText("Optional")
             for label, widget in (("Tenant ID", self._az_tenant),
                                   ("Client (application) ID", self._az_client)):
                 lay.addWidget(_field(label))
@@ -371,7 +371,7 @@ class ConnectPanel(QWidget):
             self._gcp_browser_note.setOpenExternalLinks(True)
             lay.addWidget(self._gcp_browser_note)
             self._gcp_browser_project = QLineEdit()
-            self._gcp_browser_project.setPlaceholderText("Optional — picked after sign-in")
+            self._gcp_browser_project.setPlaceholderText("Optional")
             lay.addWidget(_field("Project ID"))
             lay.addWidget(self._gcp_browser_project)
 
@@ -379,19 +379,19 @@ class ConnectPanel(QWidget):
             self._gcp_local_note = QLabel("")
             self._gcp_local_note.setWordWrap(True)
             self._gcp_local_project = QLineEdit()
-            self._gcp_local_project.setPlaceholderText("Optional — picked after sign-in")
+            self._gcp_local_project.setPlaceholderText("Optional")
             lay.addWidget(self._gcp_local_note)
             lay.addWidget(_field("Project ID"))
             lay.addWidget(self._gcp_local_project)
 
         elif p == CloudProvider.GCP and method == AuthMethod.SERVICE_ACCOUNT:
-            pick = QPushButton("Choose JSON key file…")
+            pick = QPushButton("Choose JSON key file...")
             pick.clicked.connect(self._pick_key_file)
             self._gcp_key = QPlainTextEdit()
-            self._gcp_key.setPlaceholderText("…or paste the JSON key here")
+            self._gcp_key.setPlaceholderText("or paste the JSON here")
             self._gcp_key.setFixedHeight(110)
             self._gcp_sa_project = QLineEdit()
-            self._gcp_sa_project.setPlaceholderText("Optional — defaults to the key's project")
+            self._gcp_sa_project.setPlaceholderText("Optional")
             lay.addWidget(pick)
             lay.addWidget(self._gcp_key)
             lay.addWidget(_field("Project ID"))
@@ -440,7 +440,7 @@ class ConnectPanel(QWidget):
             )
             if gcloud_path():
                 self._gcp_browser_note.setText(
-                    "gcloud CLI found ✓ — a browser window opens for you to sign in.")
+                    "Uses the gcloud CLI to open a browser sign-in.")
             else:
                 self._gcp_browser_note.setText(
                     "This needs the free gcloud CLI, which isn't installed. "
@@ -448,7 +448,7 @@ class ConnectPanel(QWidget):
                     "key instead.")
 
         for card in self._cards:
-            card.set_badge(f"Detected · {detected}" if card.info.method == AuthMethod.LOCAL
+            card.set_badge("Found" if card.info.method == AuthMethod.LOCAL
                            and detected else "")
         if select_detected and detected:
             self.select_method(AuthMethod.LOCAL)
@@ -458,8 +458,13 @@ class ConnectPanel(QWidget):
         for index, card in enumerate(self._cards):
             selected = card.info.method == method
             card.set_selected(selected)
+            # Only the visible form takes space, so the button sits right under it.
+            page = self._forms.widget(index)
+            policy = QSizePolicy.Policy.Preferred if selected else QSizePolicy.Policy.Ignored
+            page.setSizePolicy(policy, policy)
             if selected:
                 self._forms.setCurrentIndex(index)
+                self._forms.setFixedHeight(page.sizeHint().height())
                 self._connect_btn.setText(card.info.button)
         self._error.setVisible(False)
 
@@ -529,8 +534,8 @@ class ConnectPanel(QWidget):
 
     def set_busy(self, message: str) -> None:
         self._connect_btn.setEnabled(False)
-        self._connect_btn.setText("Connecting…")
-        self._set_status("", "Connecting…", message)
+        self._connect_btn.setText("Connecting...")
+        self._set_status("", "Connecting...", message)
 
     def show_device_code(self, code: DeviceCode) -> None:
         self._device_url = code.verification_url
@@ -539,7 +544,7 @@ class ConnectPanel(QWidget):
             "<b>Confirm and continue</b> and <b>Allow</b>:")
         self._device_code.setText(code.user_code)
         self._device_box.setVisible(True)
-        self._set_status("", "Waiting for you in the browser…", "Approve the sign-in to continue.")
+        self._set_status("", "Waiting for browser sign-in", "Approve it in your browser.")
 
     def set_error(self, message: str) -> None:
         self._device_box.setVisible(False)
@@ -547,14 +552,14 @@ class ConnectPanel(QWidget):
         self.select_method(self._method)
         self._error.setText(message)
         self._error.setVisible(True)
-        self._set_status("error", "Not connected", "Fix the problem below and try again.")
+        self._set_status("error", "Not connected", "See the error below.")
 
     def set_connected(self, result: ConnectResult) -> None:
         session = result.session
         self._device_box.setVisible(False)
         self._error.setVisible(False)
         self._signin.setVisible(False)
-        self._set_status("connected", f"✓ Connected to {self.provider.label}",
+        self._set_status("connected", f"Connected to {self.provider.label}",
                          session.account_label)
         self._choice.clear()
         for choice in result.choices:

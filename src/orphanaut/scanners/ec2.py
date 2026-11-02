@@ -36,14 +36,14 @@ class Ec2InstanceScanner(BaseScanner):
                             else:
                                 dependents.append(dep(
                                     "EBS volume", ebs["VolumeId"], Action.KEEP,
-                                    "set to survive termination — still billed, delete it "
+                                    "set to survive termination - still billed, delete it "
                                     "from the Storage tab"))
                         for eni in instance.get("NetworkInterfaces", []):
                             assoc = eni.get("Association", {})
                             if assoc.get("IpOwnerId") not in (None, "amazon"):
                                 dependents.append(dep(
                                     "Elastic IP", assoc.get("PublicIp", ""), Action.KEEP,
-                                    "stays allocated and starts billing — release it too"))
+                                    "stays allocated and starts billing - release it too"))
                         resources.append(
                             AwsResource(
                                 resource_id=instance_id,

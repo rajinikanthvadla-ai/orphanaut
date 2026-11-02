@@ -67,4 +67,4 @@ AZURE_REGION_LABELS: dict[str, str] = {
 
 def azure_region_display_name(region: str) -> str:
     label = AZURE_REGION_LABELS.get(region)
-    return f"{region} — {label}" if label else region
+    return f"{region} - {label}" if label else region

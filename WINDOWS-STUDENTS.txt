@@ -1,34 +1,23 @@
-Orphanaut for Windows — quick guide
-====================================
+Orphanaut for Windows
 
-EASIEST: use the installer
---------------------------
-1. Download Orphanaut-Setup-Windows.exe from the GitHub Releases page.
-2. Double-click it. If SmartScreen appears, click "More info" -> "Run anyway".
-3. Click Next until it finishes (no admin password needed).
-4. Open Orphanaut from the Start menu.
+Install
+1. Download Orphanaut-Setup-Windows.exe from the Releases page.
+2. Run it. If SmartScreen shows up, click "More info" and then "Run anyway".
+3. Open Orphanaut from the Start menu.
 
-PORTABLE (no install)
----------------------
+Portable version
 1. Download Orphanaut-Windows-Portable.zip.
-2. Right-click the zip -> Extract All -> choose a folder such as C:\Orphanaut
-   (avoid running it from inside the zip or from Downloads).
-3. Open the extracted Orphanaut folder -> double-click Orphanaut.exe.
+2. Extract it to a folder like C:\Orphanaut.
+3. Run Orphanaut.exe from that folder.
 
-FIRST STEPS IN THE APP
-----------------------
+Getting started
 1. Pick AWS, Azure or Google Cloud at the top.
-2. On the left, choose how to connect:
-   - Access keys / service principal / service account key, or
-   - Sign in with browser, or
-   - This computer (if you already used the cloud's CLI).
-3. Tick your regions, press Scan, then open the "AI & ML" tab.
-4. Click a row to see the delete impact map, then delete what you don't need.
-Press F1 at any time for the full guide.
+2. Sign in on the left.
+3. Choose your regions and click Scan.
+4. Tick what you want to remove and click Delete.
+Press F1 for help.
 
-IF THE APP DOES NOT OPEN
-------------------------
-- Open Windows Security -> Virus & threat protection -> Protection history.
-  If Orphanaut was blocked, choose "Allow on device" and try again.
-- Check the log file: %USERPROFILE%\Orphanaut\startup.log
-  Send that file to your instructor if you need help.
+If the app doesn't open
+- Windows Security > Virus & threat protection > Protection history.
+  If Orphanaut was blocked, choose "Allow on device".
+- The error log is at %USERPROFILE%\Orphanaut\startup.log

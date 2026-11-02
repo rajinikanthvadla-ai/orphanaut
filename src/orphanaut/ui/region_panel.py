@@ -40,8 +40,8 @@ class RegionPanel(QWidget):
         self._header.setObjectName("sectionHeader")
         layout.addWidget(self._header)
 
-        self._tip = QLabel("Pick only the regions you used. Fewer regions = faster scans.")
-        self._tip.setObjectName("infoBanner")
+        self._tip = QLabel("Fewer regions scan faster.")
+        self._tip.setObjectName("muted")
         self._tip.setWordWrap(True)
         layout.addWidget(self._tip)
 
@@ -150,7 +150,7 @@ class RegionPanel(QWidget):
     def _update_summary(self) -> None:
         count = len(self.selected_regions())
         if count == 0:
-            self._summary.setText("No regions selected — check at least one")
+            self._summary.setText("No regions selected - check at least one")
         elif count == len(self._all_regions):
             self._summary.setText(f"All {count} regions selected")
         else:

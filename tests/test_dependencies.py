@@ -40,7 +40,7 @@ def test_impact_counts_and_text():
     assert counts[Action.STOP] == 1
     text = impact_text(resources)
     assert "[Deleted] Space: s1" in text
-    assert "[Kept — review] Role: r" in text
+    assert "[Kept] Role: r" in text
     assert "[Stopped]" in text
 
 

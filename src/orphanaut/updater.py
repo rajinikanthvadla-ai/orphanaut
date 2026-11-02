@@ -159,7 +159,7 @@ def download(asset: Asset, progress: Callable[[int, int], None] = lambda _d, _t:
 def launch_update(path: Path) -> None:
     """Start the installer / open the disk image. The caller should then quit the app."""
     if sys.platform == "win32":
-        # Inno Setup closes nothing itself here — we quit right after — and relaunches
+        # Inno Setup closes nothing itself here - we quit right after - and relaunches
         # Orphanaut when it finishes (see installer/orphanaut.iss).
         subprocess.Popen([str(path), "/SILENT", "/SUPPRESSMSGBOXES", "/NORESTART"],
                          close_fds=True)

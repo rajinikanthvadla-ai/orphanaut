@@ -84,17 +84,33 @@ def test_results_filter_by_category_and_impact_map(window, app):
     assert len(visible) == 2
     assert "AI && ML  2" == ws._tabs.tabText(1)
 
-    for row in visible:
-        if ws._table.item(row, 3).text() == "domain":
-            ws._table.selectRow(row)
+    from PySide6.QtCore import Qt
+
+    from orphanaut.ui.impact_graph import NodeItem
+
+    def row_named(name):
+        return next(r for r in range(ws._table.rowCount()) if ws._table.item(r, 1).text() == name)
+
+    # Clicking a row previews its map without ticking it.
+    ws._table.selectRow(row_named("domain"))
+    app.processEvents()
+    assert not ws._delete_btn.isEnabled()
+    nodes = [i for i in ws._impact._graph.scene().items() if isinstance(i, NodeItem)]
+    assert sorted(n.node.kind for n in nodes) == ["SageMaker Studio Domain", "User profile"]
+
+    # Ticking the checkbox selects it for deletion.
+    ws._table.item(row_named("domain"), 0).setCheckState(Qt.CheckState.Checked)
     app.processEvents()
     assert ws._delete_btn.isEnabled()
-    assert ws._impact._tree.topLevelItemCount() == 1
-    assert ws._impact._tree.topLevelItem(0).childCount() == 1
+    assert ws._delete_btn.text() == "Delete 1"
 
-    ws._table.selectAll()
-    app.processEvents()
-    assert not ws._delete_btn.isEnabled()  # locked provisioned throughput is selected
+    # Locked resources have no checkbox, so Select all skips them.
+    locked = ws._table.item(row_named("pt"), 0)
+    assert not locked.flags() & Qt.ItemFlag.ItemIsUserCheckable
+    ws._on_select_all(True)
+    assert {r.name for r in ws._checked_resources()} == {"domain"}
+    ws._on_select_all(False)
+    assert not ws._delete_btn.isEnabled()
 
     ws._search.setText("web")
     ws._tabs.setCurrentIndex(0)

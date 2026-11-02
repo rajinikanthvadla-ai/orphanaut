@@ -139,6 +139,9 @@ def test_banner_shows_for_newer_release(monkeypatch):
     app.setOrganizationName("OrphanautTests")  # keep test settings out of the real app's
     monkeypatch.setattr(updater.sys, "platform", "win32")
     monkeypatch.setattr(updater, "installed_with_setup", lambda: True)
+    from PySide6.QtCore import QSettings
+
+    QSettings().remove("update/skipped_version")
     banner = UpdateBanner()
     banner._on_found(RELEASE)
     assert not banner.isHidden()
@@ -146,6 +149,8 @@ def test_banner_shows_for_newer_release(monkeypatch):
     assert banner._action_btn.text() == "Update now"
     banner._on_later()
     assert banner.isHidden()
+    assert QSettings().value("update/skipped_version") == "9.0.0"
+    QSettings().remove("update/skipped_version")
 
 
 def test_checks_can_be_disabled(monkeypatch):

@@ -49,7 +49,7 @@ from orphanaut.scanners.security_groups import SecurityGroupScanner
 from orphanaut.scanners.snapshots import EbsSnapshotScanner
 from orphanaut.scanners.vpc_endpoints import VpcEndpointScanner
 
-# Fast scanners — common billable resources students leave running.
+# Fast scanners - common billable resources students leave running.
 FAST_REGIONAL_SCANNERS: list[type[BaseScanner]] = [
     Ec2InstanceScanner,
     EbsVolumeScanner,
@@ -61,7 +61,7 @@ FAST_REGIONAL_SCANNERS: list[type[BaseScanner]] = [
     LambdaScanner,
 ]
 
-# Slower scanners — run after fast results are shown.
+# Slower scanners - run after fast results are shown.
 SLOW_REGIONAL_SCANNERS: list[type[BaseScanner]] = [
     EbsSnapshotScanner,
     EcsScanner,
@@ -73,7 +73,7 @@ SLOW_REGIONAL_SCANNERS: list[type[BaseScanner]] = [
     LightsailScanner,
 ]
 
-# AI & ML — SageMaker, Bedrock (incl. Claude provisioned throughput) and friends.
+# AI & ML - SageMaker, Bedrock (incl. Claude provisioned throughput) and friends.
 AI_REGIONAL_SCANNERS: list[type[BaseScanner]] = [
     SageMakerStudioScanner,
     SageMakerEndpointScanner,
@@ -191,7 +191,7 @@ def _run_scan_batch(
 
             if not done:
                 emit(
-                    f"{phase}: still working ({completed}/{total}) — "
+                    f"{phase}: still working ({completed}/{total}) - "
                     f"{len(resources_so_far) + len(batch_resources)} found so far"
                 )
                 continue
@@ -209,7 +209,7 @@ def _run_scan_batch(
                     code = error.get("Code", "AWS error")
                     error_message = (
                         f"{scanner_cls.service_name} in {region}: "
-                        f"{code} — {error.get('Message', str(exc))}"
+                        f"{code} - {error.get('Message', str(exc))}"
                     )
                     batch_failures.append(error_message)
                 except BotoCoreError as exc:
@@ -220,7 +220,7 @@ def _run_scan_batch(
                     batch_failures.append(error_message)
                 emit(
                     f"{phase}: {scanner_cls.service_name} in {region} "
-                    f"({completed}/{total}) — "
+                    f"({completed}/{total}) - "
                     f"{len(resources_so_far) + len(batch_resources)} found"
                     + (
                         f", {len(failures_so_far) + len(batch_failures)} unavailable"
@@ -261,7 +261,7 @@ def scan_aws(
         if on_progress:
             on_progress(
                 ScanProgress(
-                    message="No regions selected — choose at least one region",
+                    message="No regions selected - choose at least one region",
                     completed=0,
                     total=0,
                     resources_found=0,
@@ -311,7 +311,7 @@ def scan_aws(
         on_progress(
             ScanProgress(
                 message=(
-                    f"Fast scan done — {len(all_resources)} found. "
+                    f"Fast scan done - {len(all_resources)} found. "
                     f"Checking AI & ML services, snapshots, logs and more..."
                 ),
                 completed=len(fast_tasks),
@@ -341,7 +341,7 @@ def scan_aws(
         on_progress(
             ScanProgress(
                 message=(
-                    f"Scan complete — {len(all_resources)} resources found"
+                    f"Scan complete - {len(all_resources)} resources found"
                     + (f", {len(failures)} checks unavailable" if failures else "")
                 ),
                 completed=total,
