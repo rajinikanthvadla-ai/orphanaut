@@ -106,7 +106,14 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -e ".[dev]"
+          # cryptography 49+ ships no Intel Mac wheels; a source build links Homebrew's
+          # OpenSSL and crashes inside the app bundle. Stay on the last universal2 wheel.
+          if [ "${{ matrix.arch }}" = "Intel" ]; then
+            echo "cryptography<49" > constraints.txt
+          else
+            : > constraints.txt
+          fi
+          pip install -c constraints.txt --only-binary cryptography -e ".[dev]"
 
       - name: Build macOS app
         run: pyinstaller orphanaut.spec --noconfirm

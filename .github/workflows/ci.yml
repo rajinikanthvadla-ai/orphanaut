@@ -47,3 +47,42 @@ jobs:
 
       - name: App self-test
         run: python -m orphanaut --self-test
+
+  # Build the packaged Mac app on both chips so packaging breaks show up before a release.
+  package-macos:
+    name: package (${{ matrix.arch }} Mac)
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-latest
+            arch: AppleSilicon
+            constraint: ""
+          - runner: macos-15-intel
+            arch: Intel
+            constraint: "cryptography<49"
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          echo "${{ matrix.constraint }}" > constraints.txt
+          pip install -c constraints.txt --only-binary cryptography -e ".[dev]"
+      - name: Build app
+        run: pyinstaller orphanaut.spec --noconfirm
+      - name: Self-test the packaged app
+        run: |
+          set +e
+          QT_QPA_PLATFORM=offscreen dist/Orphanaut.app/Contents/MacOS/Orphanaut --self-test > selftest.log 2>&1
+          code=$?
+          cat selftest.log
+          if [ $code -ne 0 ]; then
+            msg=$(tail -n 12 selftest.log | tr '\n' ' ' | cut -c1-900)
+            echo "::error title=Packaged self-test failed on ${{ matrix.arch }}::$msg"
+            exit $code
+          fi
