@@ -43,6 +43,7 @@ Orphanaut puts **every billable leftover in one list**, shows a **rough monthly 
 - 💸 **Cost estimates** per resource and in total, so you clean up the expensive things first
 - 🔒 **Safe by design** — keys stay in memory only, in-use or committed resources are locked, nothing is deleted without an explicit confirmation
 - 📤 **CSV export** including the linked items of each resource
+- 🔄 **Automatic update check** — when a new release is out, a banner offers **Update now** (Windows installer updates in place; Mac opens the new DMG)
 - 📘 **Built-in guide** (press **F1**) with where-to-find-your-keys steps and required permissions
 
 ## Download — no Python needed
@@ -54,7 +55,7 @@ Get the latest version from **[Releases](https://github.com/rajinikanthvadla-ai/
 | **Windows 10/11** | `Orphanaut-Setup-Windows.exe` | Run the installer (no admin needed) → Start menu → **Orphanaut** |
 | Windows (portable) | `Orphanaut-Windows-Portable.zip` | Extract to e.g. `C:\Orphanaut` → `Orphanaut.exe` |
 | **Mac with Apple Silicon** (M1–M4) | `Orphanaut-macOS-AppleSilicon.dmg` | Open → drag **Orphanaut** to Applications |
-| Mac with Intel | coming soon — for now use [Run from source](#run-from-source) | |
+| Mac with Intel | `Orphanaut-macOS-Intel.dmg` | Open → drag **Orphanaut** to Applications |
 
 > **Windows SmartScreen:** click **More info → Run anyway** (the app is not code-signed yet).
 > **macOS Gatekeeper:** right-click Orphanaut → **Open → Open**. If macOS says the app is damaged, run `xattr -dr com.apple.quarantine /Applications/Orphanaut.app`.
@@ -121,6 +122,8 @@ src/orphanaut/
 **Will it delete my data in S3 / Blob / Cloud Storage?** Only if you select and delete the bucket or storage account itself. AI cascades never touch your training data or model artifacts — they show as *Kept — review* in the map.
 
 **Why is a resource locked?** It is in use (e.g. a Vertex model deployed to an endpoint, an attached disk) or under a commitment (Bedrock provisioned throughput with a term). Delete its parent first.
+
+**How do I update?** From v2.1.2 the app checks GitHub on startup and shows a banner when a new version is out — click **Update now**. You can also press **Check for updates** in the header. Set `ORPHANAUT_NO_UPDATE_CHECK=1` to turn the check off.
 
 **Can I use it in a classroom?** That is what it was built for. Students download the installer, sign in with the keys or browser login their instructor gives them, and clean up after each lab.
 

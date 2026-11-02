@@ -62,7 +62,7 @@ def self_test() -> int:
 
     app = QApplication.instance() or QApplication(sys.argv)
     apply_theme(app)
-    window = MainWindow()
+    window = MainWindow(check_updates=False)
     window.show()
     app.processEvents()
     window.close()

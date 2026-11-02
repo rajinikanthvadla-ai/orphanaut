@@ -76,7 +76,7 @@ def main(out_dir: str) -> None:
     out.mkdir(parents=True, exist_ok=True)
     app = QApplication(sys.argv)
     apply_theme(app)
-    window = MainWindow()
+    window = MainWindow(check_updates=False)
     window.resize(1500, 900)
     window.show()
     app.processEvents()

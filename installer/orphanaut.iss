@@ -19,6 +19,9 @@ AppUpdatesURL=https://github.com/rajinikanthvadla-ai/orphanaut/releases
 DefaultDirName={localappdata}\Programs\Orphanaut
 DefaultGroupName=Orphanaut
 DisableProgramGroupPage=yes
+; In-app updates run this installer with /SILENT; close the old copy first.
+CloseApplications=yes
+RestartApplications=no
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 OutputDir=..\dist
@@ -47,4 +50,4 @@ Name: "{group}\Uninstall Orphanaut"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\Orphanaut"; Filename: "{app}\Orphanaut.exe"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\Orphanaut.exe"; Description: "{cm:LaunchProgram,Orphanaut}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\Orphanaut.exe"; Description: "{cm:LaunchProgram,Orphanaut}"; Flags: nowait postinstall

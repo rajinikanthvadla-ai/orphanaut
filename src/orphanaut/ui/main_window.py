@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import QSize, Qt
+from PySide6.QtCore import QSize, Qt, QTimer
 from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QButtonGroup,
@@ -22,6 +22,7 @@ from orphanaut.models import CloudProvider
 from orphanaut.ui.guide import GuideDialog
 from orphanaut.ui.icons import app_icon, cloud_icon
 from orphanaut.ui.styles import PROVIDER_COLORS
+from orphanaut.ui.update_banner import UpdateBanner
 from orphanaut.ui.workspace import CloudWorkspace
 
 _TAB_LABELS = {
@@ -32,7 +33,7 @@ _TAB_LABELS = {
 
 
 class MainWindow(QMainWindow):
-    def __init__(self) -> None:
+    def __init__(self, check_updates: bool = True) -> None:
         super().__init__()
         self.setWindowTitle("Orphanaut — find & clean up forgotten cloud and AI resources")
         self.setWindowIcon(app_icon())
@@ -42,6 +43,9 @@ class MainWindow(QMainWindow):
         self._tab_buttons: dict[CloudProvider, QPushButton] = {}
         self._build_ui()
         QShortcut(QKeySequence("F1"), self, activated=self._open_guide)
+        if check_updates:
+            # Quietly ask GitHub for a newer release shortly after the window appears.
+            QTimer.singleShot(2500, self._update_banner.check)
 
     def _build_ui(self) -> None:
         central = QWidget()
@@ -52,6 +56,8 @@ class MainWindow(QMainWindow):
         root.setSpacing(0)
         root.addWidget(self._build_header())
         root.addWidget(self._build_cloud_bar())
+        self._update_banner = UpdateBanner()
+        root.addWidget(self._update_banner)
 
         self._stack = QStackedWidget()
         for provider in CloudProvider:
@@ -95,8 +101,13 @@ class MainWindow(QMainWindow):
         layout.addSpacing(10)
         layout.addLayout(brand)
         layout.addStretch()
+        updates = QPushButton("⟳  Check for updates")
+        updates.setObjectName("headerButton")
+        updates.setCursor(Qt.CursorShape.PointingHandCursor)
+        updates.clicked.connect(lambda: self._update_banner.check(manual=True))
         layout.addWidget(privacy)
         layout.addSpacing(10)
+        layout.addWidget(updates)
         layout.addWidget(guide)
         return header
 
@@ -175,6 +186,7 @@ class MainWindow(QMainWindow):
         return self._workspaces[provider]
 
     def closeEvent(self, event) -> None:  # noqa: N802 - Qt API
+        self._update_banner.shutdown()
         for workspace in self._workspaces.values():
             workspace.shutdown()
         super().closeEvent(event)

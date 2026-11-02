@@ -25,7 +25,7 @@ def app():
 
 @pytest.fixture
 def window(app):
-    win = MainWindow()
+    win = MainWindow(check_updates=False)
     win.show()
     app.processEvents()
     yield win

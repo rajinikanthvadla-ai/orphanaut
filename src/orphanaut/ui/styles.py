@@ -72,6 +72,10 @@ QPushButton#headerButton {
 }
 QPushButton#headerButton:hover { background: rgba(255,255,255,0.22); }
 
+/* ---------- Update banner ---------- */
+QFrame#updateBanner { background: @success_soft; border-bottom: 1px solid #ABEFC6; }
+QLabel#updateText { color: @success; font-size: 13px; }
+
 /* ---------- Cloud tabs ---------- */
 QFrame#cloudBar { background: @surface; border-bottom: 1px solid @border; }
 QPushButton#cloudTab {
