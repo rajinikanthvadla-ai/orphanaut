@@ -54,7 +54,7 @@ Get the latest version from **[Releases](https://github.com/rajinikanthvadla-ai/
 | **Windows 10/11** | `Orphanaut-Setup-Windows.exe` | Run the installer (no admin needed) → Start menu → **Orphanaut** |
 | Windows (portable) | `Orphanaut-Windows-Portable.zip` | Extract to e.g. `C:\Orphanaut` → `Orphanaut.exe` |
 | **Mac with Apple Silicon** (M1–M4) | `Orphanaut-macOS-AppleSilicon.dmg` | Open → drag **Orphanaut** to Applications |
-| Mac with Intel | `Orphanaut-macOS-Intel.dmg` | Open → drag **Orphanaut** to Applications |
+| Mac with Intel | coming soon — for now use [Run from source](#run-from-source) | |
 
 > **Windows SmartScreen:** click **More info → Run anyway** (the app is not code-signed yet).
 > **macOS Gatekeeper:** right-click Orphanaut → **Open → Open**. If macOS says the app is damaged, run `xattr -dr com.apple.quarantine /Applications/Orphanaut.app`.
