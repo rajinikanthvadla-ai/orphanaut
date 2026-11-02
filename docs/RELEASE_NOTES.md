@@ -1,4 +1,4 @@
-## Orphanaut 2.1 — AI & ML cleanup, delete impact map, and a brand-new app
+## Orphanaut 2.1.1 — AI & ML cleanup, delete impact map, and a brand-new app
 
 ### Highlights
 - **AI & ML resources on all three clouds.** SageMaker (Studio domains, apps, endpoints, notebooks, training/processing/tuning jobs, MLflow, HyperPod, feature groups), Bedrock (knowledge bases + vector stores, agents, provisioned throughput for Claude and other models, custom/imported models, running jobs), OpenSearch Serverless, Kendra, Comprehend, Rekognition; Azure OpenAI / AI Services / AI Foundry, Azure Machine Learning, Azure AI Search; Vertex AI endpoints, models, Vector Search, jobs, Agent Engine, Workbench, Colab runtimes and Vertex AI Search.

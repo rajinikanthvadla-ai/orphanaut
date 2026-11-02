@@ -92,6 +92,8 @@ jobs:
           - runner: macos-15-intel
             arch: Intel
     runs-on: ${{ matrix.runner }}
+    # Intel runners are being phased out by GitHub; never let them block a release.
+    continue-on-error: ${{ matrix.arch == 'Intel' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -113,7 +115,17 @@ jobs:
         run: codesign --force --deep --sign - dist/Orphanaut.app || echo "codesign skipped"
 
       - name: Smoke-test the packaged app
-        run: QT_QPA_PLATFORM=offscreen dist/Orphanaut.app/Contents/MacOS/Orphanaut --self-test
+        run: |
+          set +e
+          QT_QPA_PLATFORM=offscreen dist/Orphanaut.app/Contents/MacOS/Orphanaut --self-test > selftest.log 2>&1
+          code=$?
+          cat selftest.log
+          if [ $code -ne 0 ]; then
+            # Surface the error as an annotation (readable without signing in).
+            msg=$( (tail -n 15 selftest.log; tail -n 15 ~/Orphanaut/startup.log 2>/dev/null) | tr '\n' ' ' | cut -c1-900)
+            echo "::error title=Self-test failed on ${{ matrix.arch }} (exit $code)::$msg"
+            exit $code
+          fi
 
       - name: Create zip and dmg
         run: |
@@ -147,6 +159,8 @@ jobs:
 
   release:
     needs: [build-windows, build-macos, build-python]
+    # Publish whatever built (Windows is required); a failed optional Mac build is skipped.
+    if: ${{ !cancelled() && needs.build-windows.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
