@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orphanaut — free app to find and delete unused AWS, Azure, GCP and AI resources</title>
+<meta name="description" content="Orphanaut is a free open-source desktop app for Windows and macOS that finds forgotten, billable AWS, Azure and Google Cloud resources — including SageMaker, Bedrock, Azure OpenAI and Vertex AI — and deletes them safely with a delete impact map.">
+<meta name="keywords" content="delete unused AWS resources, AWS cost cleanup, orphaned cloud resources, Azure cleanup tool, GCP unused resources, SageMaker cleanup, delete SageMaker domain, Bedrock knowledge base cost, Azure OpenAI cost, Vertex AI cleanup, cloud cost students, FinOps">
+<link rel="canonical" href="https://rajinikanthvadla-ai.github.io/orphanaut/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Orphanaut — clean up forgotten cloud & AI resources">
+<meta property="og:description" content="Find and safely delete leftover AWS, Azure, Google Cloud and AI resources before they cost you. Free for Windows and macOS.">
+<meta property="og:image" content="https://raw.githubusercontent.com/rajinikanthvadla-ai/orphanaut/main/docs/images/ai-impact-map.png">
+<meta property="og:url" content="https://rajinikanthvadla-ai.github.io/orphanaut/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="https://raw.githubusercontent.com/rajinikanthvadla-ai/orphanaut/main/assets/icon.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Orphanaut",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Windows 10, Windows 11, macOS",
+  "description": "Find and delete forgotten AWS, Azure, Google Cloud and AI resources (SageMaker, Bedrock, Azure OpenAI, Vertex AI) with a delete impact map.",
+  "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
+  "author": {"@type": "Person", "name": "Rajinikanth Vadla"},
+  "license": "https://opensource.org/licenses/MIT",
+  "downloadUrl": "https://github.com/rajinikanthvadla-ai/orphanaut/releases/latest",
+  "softwareVersion": "2.1.0",
+  "image": "https://raw.githubusercontent.com/rajinikanthvadla-ai/orphanaut/main/docs/images/ai-impact-map.png"
+}
+</script>
+<style>
+  :root { --ink:#0F172A; --muted:#5B6B82; --primary:#5B4BDB; --bg:#F3F5FB; --card:#fff; --line:#E2E7F0; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color:var(--ink); background:var(--bg); line-height:1.55; }
+  header { background: linear-gradient(90deg,#16123A,#3A2E8F); color:#fff; padding: 56px 16px 72px; text-align:center; }
+  header img { width:84px; border-radius:20px; }
+  h1 { font-size: clamp(28px, 5vw, 46px); margin: 14px 0 8px; }
+  header p { color:#D9D5FF; font-size: 18px; max-width: 760px; margin: 0 auto; }
+  .btns { margin-top: 26px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+  .btn { display:inline-block; padding: 12px 20px; border-radius: 10px; font-weight:700; text-decoration:none; }
+  .btn.primary { background:#fff; color:var(--primary); }
+  .btn.ghost { border:1px solid rgba(255,255,255,.4); color:#fff; }
+  main { max-width: 1100px; margin: -44px auto 0; padding: 0 16px 48px; }
+  .shot { width:100%; border-radius: 14px; box-shadow: 0 20px 50px rgba(15,23,42,.25); }
+  .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 32px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding: 18px; }
+  .card h3 { margin: 0 0 6px; font-size: 17px; }
+  .card p { margin:0; color:var(--muted); }
+  h2 { margin-top: 44px; }
+  table { width:100%; border-collapse: collapse; background:#fff; border-radius:12px; overflow:hidden; }
+  td, th { padding: 10px 12px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; }
+  footer { text-align:center; color:var(--muted); padding: 24px 16px 40px; }
+  @media (max-width: 640px) { td, th { display:block; } }
+</style>
+</head>
+<body>
+<header>
+  <img src="https://raw.githubusercontent.com/rajinikanthvadla-ai/orphanaut/main/assets/icon.png" alt="Orphanaut logo">
+  <h1>Orphanaut</h1>
+  <p>Find and delete forgotten <b>AWS</b>, <b>Azure</b>, <b>Google Cloud</b> and <b>AI</b> resources — SageMaker, Bedrock, Azure OpenAI, Vertex AI — before they cost you. Free for Windows and macOS.</p>
+  <div class="btns">
+    <a class="btn primary" href="https://github.com/rajinikanthvadla-ai/orphanaut/releases/latest">⬇ Download free</a>
+    <a class="btn ghost" href="https://github.com/rajinikanthvadla-ai/orphanaut">★ Star on GitHub</a>
+  </div>
+</header>
+<main>
+  <img class="shot" src="images/ai-impact-map.png" alt="Orphanaut listing SageMaker and Bedrock resources with the delete impact map">
+  <div class="grid">
+    <div class="card"><h3>☁️ Three clouds, one app</h3><p>AWS, Azure and Google Cloud tabs, each with its own sign-in, regions and results.</p></div>
+    <div class="card"><h3>🤖 AI & ML cleanup</h3><p>SageMaker domains and endpoints, Bedrock knowledge bases and Claude provisioned throughput, Azure OpenAI, Azure ML, Vertex AI and more.</p></div>
+    <div class="card"><h3>🗺️ Delete impact map</h3><p>See every associated resource that is deleted, stopped or kept — before you confirm.</p></div>
+    <div class="card"><h3>🔑 Easy sign-in</h3><p>Paste keys, sign in with your browser, or reuse the CLI login already on your computer.</p></div>
+    <div class="card"><h3>💸 Cost estimates</h3><p>Rough monthly cost per resource so you remove the expensive leftovers first.</p></div>
+    <div class="card"><h3>🔒 Private & safe</h3><p>Keys stay on your device. In-use resources are locked. Nothing is deleted without confirmation.</p></div>
+  </div>
+
+  <h2>Download</h2>
+  <table>
+    <tr><th>Windows 10/11</th><td><code>Orphanaut-Setup-Windows.exe</code> — installer, no admin needed (or the portable zip)</td></tr>
+    <tr><th>Mac (Apple Silicon)</th><td><code>Orphanaut-macOS-AppleSilicon.dmg</code></td></tr>
+    <tr><th>Mac (Intel)</th><td><code>Orphanaut-macOS-Intel.dmg</code></td></tr>
+  </table>
+  <p>All files are on the <a href="https://github.com/rajinikanthvadla-ai/orphanaut/releases/latest">latest release</a> page.</p>
+
+  <h2>How it works</h2>
+  <ol>
+    <li>Pick a cloud and connect — keys, browser sign-in, or the login on your computer.</li>
+    <li>Choose the regions you used and press <b>Scan</b>.</li>
+    <li>Open the <b>AI &amp; ML</b> tab, click a resource and read its delete impact map.</li>
+    <li>Select what you don't need and delete it safely.</li>
+  </ol>
+</main>
+<footer>Made with ♥ by <b>Rajinikanth Vadla</b> · MIT licensed · <a href="https://github.com/rajinikanthvadla-ai/orphanaut">github.com/rajinikanthvadla-ai/orphanaut</a></footer>
+</body>
+</html>

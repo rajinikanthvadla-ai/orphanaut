@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from botocore.exceptions import ClientError
 
+from orphanaut.dependencies import dep
 from orphanaut.models import AwsResource
 from orphanaut.scanners.base import BaseScanner
 
@@ -28,7 +29,13 @@ class S3Scanner(BaseScanner):
                         region=region,
                         status="active",
                         details=f"Created: {bucket.get('CreationDate', 'N/A')}",
-                        extra={"bucket_name": name},
+                        extra={
+                            "bucket_name": name,
+                            "dependents": [
+                                dep("All objects and object versions", "everything in the bucket",
+                                    note="emptied before the bucket is deleted"),
+                            ],
+                        },
                     )
                 )
         except ClientError:

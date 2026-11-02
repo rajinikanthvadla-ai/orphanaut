@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from googleapiclient import discovery
 from googleapiclient.errors import HttpError
 
@@ -10,12 +12,25 @@ from orphanaut.models import CloudResource
 from orphanaut.providers.session import GcpSession
 
 
-def delete_gcp_resource(session: GcpSession, resource: CloudResource) -> None:
+def delete_gcp_resource(
+    session: GcpSession,
+    resource: CloudResource,
+    progress: Callable[[str], None] = lambda _m: None,
+) -> None:
+    from orphanaut.actions.gcp_ai_deleter import AI_SERVICES, delete_gcp_ai_resource
+    from orphanaut.providers.gcp_rest import GcpApiError
+
     if not resource.deletable:
         raise DeleteError(
             f"{resource.resource_type} '{resource.name or resource.resource_id}' "
             "is in use or protected and cannot be deleted."
         )
+
+    if resource.service in AI_SERVICES:
+        try:
+            return delete_gcp_ai_resource(session, resource, progress)
+        except GcpApiError as exc:
+            raise DeleteError(str(exc)) from exc
 
     project = session.project_id
     try:

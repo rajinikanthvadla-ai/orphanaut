@@ -11,8 +11,18 @@ from botocore.exceptions import BotoCoreError, ClientError
 
 from orphanaut.aws.config import AWS_CONFIG
 from orphanaut.aws.regions import get_all_regions
+from orphanaut.dependencies import link_related
 from orphanaut.models import CloudProvider, CloudResource
 from orphanaut.scanners.base import BaseScanner
+from orphanaut.scanners.bedrock import (
+    BedrockAgentScanner,
+    BedrockKnowledgeBaseScanner,
+    BedrockModelScanner,
+    ComprehendScanner,
+    KendraScanner,
+    OpenSearchServerlessScanner,
+    RekognitionCustomLabelsScanner,
+)
 from orphanaut.scanners.cloudwatch import CloudWatchLogsScanner
 from orphanaut.scanners.dynamodb import DynamoDbScanner
 from orphanaut.scanners.ebs import EbsVolumeScanner
@@ -28,6 +38,13 @@ from orphanaut.scanners.nat import NatGatewayScanner
 from orphanaut.scanners.rds import RdsScanner
 from orphanaut.scanners.route53 import Route53Scanner
 from orphanaut.scanners.s3 import S3Scanner
+from orphanaut.scanners.sagemaker import (
+    SageMakerEndpointScanner,
+    SageMakerJobScanner,
+    SageMakerNotebookScanner,
+    SageMakerPlatformScanner,
+    SageMakerStudioScanner,
+)
 from orphanaut.scanners.security_groups import SecurityGroupScanner
 from orphanaut.scanners.snapshots import EbsSnapshotScanner
 from orphanaut.scanners.vpc_endpoints import VpcEndpointScanner
@@ -56,12 +73,30 @@ SLOW_REGIONAL_SCANNERS: list[type[BaseScanner]] = [
     LightsailScanner,
 ]
 
+# AI & ML — SageMaker, Bedrock (incl. Claude provisioned throughput) and friends.
+AI_REGIONAL_SCANNERS: list[type[BaseScanner]] = [
+    SageMakerStudioScanner,
+    SageMakerEndpointScanner,
+    SageMakerNotebookScanner,
+    SageMakerJobScanner,
+    SageMakerPlatformScanner,
+    BedrockKnowledgeBaseScanner,
+    BedrockAgentScanner,
+    BedrockModelScanner,
+    OpenSearchServerlessScanner,
+    KendraScanner,
+    ComprehendScanner,
+    RekognitionCustomLabelsScanner,
+]
+
 GLOBAL_SCANNERS: list[type[BaseScanner]] = [
     S3Scanner,
     Route53Scanner,
 ]
 
-REGIONAL_SCANNERS: list[type[BaseScanner]] = FAST_REGIONAL_SCANNERS + SLOW_REGIONAL_SCANNERS
+REGIONAL_SCANNERS: list[type[BaseScanner]] = (
+    FAST_REGIONAL_SCANNERS + AI_REGIONAL_SCANNERS + SLOW_REGIONAL_SCANNERS
+)
 
 HEARTBEAT_SECONDS = 3
 
@@ -238,7 +273,7 @@ def scan_aws(
     account_id = _get_account_id(session)
 
     fast_tasks = _build_tasks(regions, FAST_REGIONAL_SCANNERS, global_scanners=GLOBAL_SCANNERS)
-    slow_tasks = _build_tasks(regions, SLOW_REGIONAL_SCANNERS)
+    slow_tasks = _build_tasks(regions, AI_REGIONAL_SCANNERS + SLOW_REGIONAL_SCANNERS)
     total = len(fast_tasks) + len(slow_tasks)
 
     if on_progress:
@@ -277,7 +312,7 @@ def scan_aws(
             ScanProgress(
                 message=(
                     f"Fast scan done — {len(all_resources)} found. "
-                    f"Checking snapshots, logs, and other services..."
+                    f"Checking AI & ML services, snapshots, logs and more..."
                 ),
                 completed=len(fast_tasks),
                 total=total,
@@ -318,6 +353,7 @@ def scan_aws(
             )
         )
 
+    link_related(all_resources)
     return sorted(all_resources, key=lambda r: (r.region, r.service, r.resource_id))
 
 

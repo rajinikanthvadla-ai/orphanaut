@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from botocore.exceptions import ClientError
 
+from orphanaut.dependencies import Action, dep
 from orphanaut.models import AwsResource
 from orphanaut.scanners.base import BaseScanner
 
@@ -30,7 +31,14 @@ class RdsScanner(BaseScanner):
                             details=(
                                 f"Engine: {db.get('Engine', '')} {db.get('DBInstanceClass', '')}"
                             ),
-                            extra={"db_instance_identifier": db["DBInstanceIdentifier"]},
+                            extra={
+                                "db_instance_identifier": db["DBInstanceIdentifier"],
+                                "dependents": [
+                                    dep("Automated backups", "all retained backups"),
+                                    dep("Final snapshot", "not taken", Action.KEEP,
+                                        "take a manual snapshot first if you need the data"),
+                                ],
+                            },
                         )
                     )
 
@@ -46,7 +54,19 @@ class RdsScanner(BaseScanner):
                             region=self.region,
                             status=cluster.get("Status", "unknown"),
                             details=f"Engine: {cluster.get('Engine', '')}",
-                            extra={"db_cluster_identifier": cluster["DBClusterIdentifier"]},
+                            extra={
+                                "db_cluster_identifier": cluster["DBClusterIdentifier"],
+                                "member_instances": [
+                                    m["DBInstanceIdentifier"]
+                                    for m in cluster.get("DBClusterMembers", [])
+                                ],
+                                "dependents": [
+                                    dep("Cluster instance", m["DBInstanceIdentifier"],
+                                        note="writer" if m.get("IsClusterWriter") else "reader")
+                                    for m in cluster.get("DBClusterMembers", [])
+                                ]
+                                + [dep("Automated backups", "all retained backups")],
+                            },
                         )
                     )
         except ClientError:

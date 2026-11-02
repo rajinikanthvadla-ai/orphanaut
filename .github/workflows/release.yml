@@ -8,8 +8,32 @@ on:
 permissions:
   contents: write
 
+env:
+  PYTHONUTF8: "1"
+
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y libegl1 libgl1 libxkbcommon0 libfontconfig1 libdbus-1-3
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - run: ruff check src tests
+      - run: pytest -v
+      - run: python -m orphanaut --self-test
+
   build-windows:
+    needs: test
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,6 +42,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          cache: pip
 
       - name: Install dependencies
         run: |
@@ -27,25 +52,46 @@ jobs:
       - name: Build Windows app folder
         run: pyinstaller orphanaut.spec --noconfirm
 
-      - name: Copy Windows student guide beside executable
-        run: copy WINDOWS-STUDENTS.txt dist\Orphanaut\WINDOWS-STUDENTS.txt
-        shell: cmd
-
-      - name: Create Windows zip
+      - name: Smoke-test the packaged app
         shell: pwsh
         run: |
-          Compress-Archive -Path dist/Orphanaut -DestinationPath dist/Orphanaut-Windows.zip -Force
+          $env:QT_QPA_PLATFORM = "offscreen"
+          $p = Start-Process -FilePath dist\Orphanaut\Orphanaut.exe -ArgumentList "--self-test" -Wait -PassThru -NoNewWindow
+          if ($p.ExitCode -ne 0) { throw "Packaged app self-test failed ($($p.ExitCode))" }
 
-      - name: Upload Windows artifact
-        uses: actions/upload-artifact@v4
+      - name: Build installer (Inno Setup)
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart("v")
+          if (-not (Get-Command iscc -ErrorAction SilentlyContinue)) { choco install innosetup -y --no-progress }
+          $iscc = (Get-Command iscc -ErrorAction SilentlyContinue).Source
+          if (-not $iscc) { $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" }
+          & $iscc "/DAppVersion=$version" installer\orphanaut.iss
+
+      - name: Create portable zip
+        shell: pwsh
+        run: |
+          Copy-Item WINDOWS-STUDENTS.txt dist\Orphanaut\WINDOWS-STUDENTS.txt -Force
+          Compress-Archive -Path dist/Orphanaut -DestinationPath dist/Orphanaut-Windows-Portable.zip -Force
+
+      - uses: actions/upload-artifact@v4
         with:
           name: orphanaut-windows
           path: |
-            dist/Orphanaut-Windows.zip
-            dist/Orphanaut/Orphanaut.exe
+            dist/Orphanaut-Setup-Windows.exe
+            dist/Orphanaut-Windows-Portable.zip
 
   build-macos:
-    runs-on: macos-latest
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-latest
+            arch: AppleSilicon
+          - runner: macos-15-intel
+            arch: Intel
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
 
@@ -53,6 +99,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          cache: pip
 
       - name: Install dependencies
         run: |
@@ -62,39 +109,57 @@ jobs:
       - name: Build macOS app
         run: pyinstaller orphanaut.spec --noconfirm
 
-      - name: Create macOS zip
+      - name: Ad-hoc sign the app bundle
+        run: codesign --force --deep --sign - dist/Orphanaut.app || echo "codesign skipped"
+
+      - name: Smoke-test the packaged app
+        run: QT_QPA_PLATFORM=offscreen dist/Orphanaut.app/Contents/MacOS/Orphanaut --self-test
+
+      - name: Create zip and dmg
         run: |
           cd dist
-          zip -r Orphanaut-macOS.zip Orphanaut.app
+          ditto -c -k --sequesterRsrc --keepParent Orphanaut.app Orphanaut-macOS-${{ matrix.arch }}.zip
+          mkdir dmg && cp -R Orphanaut.app dmg/ && ln -s /Applications dmg/Applications
+          hdiutil create -volname Orphanaut -srcfolder dmg -ov -format UDZO Orphanaut-macOS-${{ matrix.arch }}.dmg
 
-      - name: Upload macOS artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: orphanaut-macos
-          path: dist/Orphanaut-macOS.zip
+          name: orphanaut-macos-${{ matrix.arch }}
+          path: |
+            dist/Orphanaut-macOS-${{ matrix.arch }}.zip
+            dist/Orphanaut-macOS-${{ matrix.arch }}.dmg
+
+  build-python:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: |
+          python -m pip install --upgrade pip build
+          python -m build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: orphanaut-python
+          path: dist/*
 
   release:
-    needs: [build-windows, build-macos]
+    needs: [build-windows, build-macos, build-python]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download Windows build
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
-          name: orphanaut-windows
           path: release
-
-      - name: Download macOS build
-        uses: actions/download-artifact@v4
-        with:
-          name: orphanaut-macos
-          path: release
+          merge-multiple: true
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            release/Orphanaut-Windows.zip
-            release/Orphanaut-macOS.zip
+          name: Orphanaut ${{ github.ref_name }}
+          body_path: docs/RELEASE_NOTES.md
+          files: release/*
           generate_release_notes: true

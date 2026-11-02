@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from azure.core.exceptions import HttpResponseError
 from azure.mgmt.compute import ComputeManagementClient
 from azure.mgmt.network import NetworkManagementClient
@@ -12,12 +14,25 @@ from orphanaut.models import CloudResource
 from orphanaut.providers.session import AzureSession
 
 
-def delete_azure_resource(session: AzureSession, resource: CloudResource) -> None:
+def delete_azure_resource(
+    session: AzureSession,
+    resource: CloudResource,
+    progress: Callable[[str], None] = lambda _m: None,
+) -> None:
+    from orphanaut.actions.azure_ai_deleter import AI_SERVICES, delete_azure_ai_resource
+    from orphanaut.providers.azure_arm import ArmError
+
     if not resource.deletable:
         raise DeleteError(
             f"{resource.resource_type} '{resource.name or resource.resource_id}' "
             "is in use or protected and cannot be deleted."
         )
+
+    if resource.service in AI_SERVICES:
+        try:
+            return delete_azure_ai_resource(session, resource, progress)
+        except ArmError as exc:
+            raise DeleteError(str(exc)) from exc
 
     rg = resource.extra.get("resource_group", "")
     compute = ComputeManagementClient(session.credential, session.subscription_id)

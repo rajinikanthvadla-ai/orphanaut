@@ -1,3 +1,3 @@
-"""Orphanaut — find and clean up billable AWS resources."""
+"""Orphanaut — find and clean up forgotten AWS, Azure, Google Cloud and AI resources."""
 
-__version__ = "1.0.0"
+__version__ = "2.1.0"

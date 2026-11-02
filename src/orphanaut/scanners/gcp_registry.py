@@ -12,6 +12,7 @@ from orphanaut.scanners.gcp_base import GcpBaseScanner
 from orphanaut.scanners.gcp_disks import GcpDiskScanner
 from orphanaut.scanners.gcp_instances import GcpInstanceScanner
 from orphanaut.scanners.gcp_storage import GcpStorageScanner
+from orphanaut.scanners.gcp_vertex import VERTEX_SCANNERS
 from orphanaut.scanners.registry import HEARTBEAT_SECONDS, ScanProgress
 
 GCP_SCANNERS: list[type[GcpBaseScanner]] = [
@@ -19,6 +20,7 @@ GCP_SCANNERS: list[type[GcpBaseScanner]] = [
     GcpDiskScanner,
     GcpAddressScanner,
     GcpStorageScanner,
+    *VERTEX_SCANNERS,
 ]
 
 

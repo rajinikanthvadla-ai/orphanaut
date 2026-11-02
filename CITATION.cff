@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use Orphanaut in teaching or research, please cite it."
+title: "Orphanaut: find and clean up forgotten AWS, Azure, Google Cloud and AI resources"
+type: software
+authors:
+  - given-names: Rajinikanth
+    family-names: Vadla
+version: 2.1.0
+date-released: 2026-11-02
+license: MIT
+repository-code: "https://github.com/rajinikanthvadla-ai/orphanaut"
+url: "https://rajinikanthvadla-ai.github.io/orphanaut/"
+keywords:
+  - cloud cost
+  - aws
+  - azure
+  - google cloud
+  - sagemaker
+  - bedrock
+  - vertex ai
+  - finops
+  - education

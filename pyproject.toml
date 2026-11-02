@@ -4,32 +4,43 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "orphanaut"
-version = "2.0.0"
-description = "Cross-platform GUI to find and clean up billable AWS, Azure, and GCP resources"
+version = "2.1.0"
+description = "Free desktop app to find and delete forgotten, billable AWS, Azure, Google Cloud and AI resources (SageMaker, Bedrock, Azure OpenAI, Vertex AI) — with a delete impact map"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11"
 authors = [{ name = "Rajinikanth Vadla" }]
-keywords = ["aws", "azure", "gcp", "cloud", "cleanup", "cost", "gui", "resources", "multi-cloud"]
+keywords = [
+    "aws", "azure", "gcp", "google-cloud", "multi-cloud", "cloud-cost", "finops",
+    "cost-optimization", "cleanup", "unused-resources", "orphaned-resources", "billing",
+    "sagemaker", "bedrock", "azure-openai", "vertex-ai", "mlops", "students", "gui", "desktop",
+]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Environment :: MacOS X",
     "Environment :: Win32 (MS Windows)",
+    "Environment :: X11 Applications :: Qt",
+    "Intended Audience :: Developers",
     "Intended Audience :: Education",
+    "Intended Audience :: System Administrators",
     "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: System :: Systems Administration",
+    "Topic :: Utilities",
 ]
 dependencies = [
-    "boto3>=1.34",
+    "boto3>=1.35",
     "PySide6>=6.6",
+    "requests>=2.31",
     "azure-identity>=1.16",
     "azure-mgmt-compute>=30.0",
     "azure-mgmt-network>=25.0",
-    "azure-mgmt-resource>=23.0",
     "azure-mgmt-storage>=21.0",
     "google-api-python-client>=2.100",
     "google-auth>=2.28",
@@ -45,10 +56,15 @@ dev = [
 [project.scripts]
 orphanaut = "orphanaut.main:main"
 
+[project.gui-scripts]
+orphanaut-gui = "orphanaut.main:main"
+
 [project.urls]
-Homepage = "https://github.com/rajinikanthvadla/orphanaut"
-Repository = "https://github.com/rajinikanthvadla/orphanaut"
-Issues = "https://github.com/rajinikanthvadla/orphanaut/issues"
+Homepage = "https://github.com/rajinikanthvadla-ai/orphanaut"
+Documentation = "https://rajinikanthvadla-ai.github.io/orphanaut/"
+Repository = "https://github.com/rajinikanthvadla-ai/orphanaut"
+Download = "https://github.com/rajinikanthvadla-ai/orphanaut/releases/latest"
+Issues = "https://github.com/rajinikanthvadla-ai/orphanaut/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]

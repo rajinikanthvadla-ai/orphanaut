@@ -1,211 +1,143 @@
+<div align="center">
+
+<img src="assets/icon.png" width="96" alt="Orphanaut logo">
+
 # Orphanaut
 
-**Find and clean up billable AWS, Azure, and GCP resources — with a simple desktop GUI.**
+### Find and delete forgotten AWS, Azure, Google Cloud **and AI** resources — before they cost you.
 
-Orphanaut helps students and developers discover leftover cloud resources that can incur charges, review them in one place, and delete them safely from the app.
+Free, open-source desktop app for **Windows** and **macOS**. Scan your cloud account, see what is still running and what it costs, check the **delete impact map**, and clean up safely — including **SageMaker**, **Bedrock (Claude)**, **Azure OpenAI** and **Vertex AI**.
 
+[![Download](https://img.shields.io/github/v/release/rajinikanthvadla-ai/orphanaut?label=Download&style=for-the-badge&color=5B4BDB)](https://github.com/rajinikanthvadla-ai/orphanaut/releases/latest)
+[![CI](https://img.shields.io/github/actions/workflow/status/rajinikanthvadla-ai/orphanaut/ci.yml?branch=main&label=tests&style=for-the-badge)](https://github.com/rajinikanthvadla-ai/orphanaut/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](LICENSE)
+
+![Platforms](https://img.shields.io/badge/Windows%20%7C%20macOS-desktop%20app-0F172A)
+![Clouds](https://img.shields.io/badge/AWS%20%7C%20Azure%20%7C%20Google%20Cloud-multi--cloud-FF9900)
+![AI](https://img.shields.io/badge/SageMaker%20%7C%20Bedrock%20%7C%20Azure%20OpenAI%20%7C%20Vertex%20AI-AI%20cleanup-5B4BDB)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
-![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS-lightgrey)
-![Clouds](https://img.shields.io/badge/clouds-AWS%20%7C%20Azure%20%7C%20GCP-orange)
+
+<img src="docs/images/ai-impact-map.png" alt="Orphanaut showing SageMaker and Bedrock resources with the delete impact map" width="100%">
+
+</div>
 
 ---
+
+## Why Orphanaut?
+
+Cloud labs and AI experiments leave things running: a SageMaker Studio domain with a GPU app, a Bedrock knowledge base whose vector store bills ~$350/month, an Azure OpenAI provisioned deployment, a Vertex AI endpoint, a NAT gateway nobody remembers. Each console hides them in a different place.
+
+Orphanaut puts **every billable leftover in one list**, shows a **rough monthly cost**, and before you delete anything shows a **map of everything that goes with it** — so you know that deleting a SageMaker domain also removes its user profiles, spaces, apps and home EFS volume, while your S3 data is kept.
 
 ## Features
 
-- **Multi-cloud** — AWS, Azure, and GCP in one app with a clean provider switcher
-- **Zero-install download** — students get a ready-to-run `.exe`/`.app`, no Python needed
-- **Cost estimation** — see roughly what each leftover resource costs per month before it bills you
-- **Cross-platform GUI** — native desktop app for **Windows** and **macOS**
-- **Two auth methods** — AWS Access Key + Secret Key, or **AWS SSO** profile
-- **All regions** — scans every enabled AWS region in parallel
-- **18+ resource types** — EC2, EBS, RDS, Lambda, S3, Security Groups, and more
-- **Safe deletion** — protected/in-use resources are blocked; confirmation before anything is destroyed
-- **Export to CSV** — share or archive scan results
-- **No credential storage** — keys stay in memory for the session only
+- ☁️ **AWS, Azure and Google Cloud** — one tab per cloud at the top, each with its own connection, regions and results. Connect to all three at once.
+- 🤖 **AI & ML cleanup** — SageMaker, Bedrock (including **provisioned throughput for Claude**), OpenSearch Serverless vector stores, Kendra, Comprehend, Rekognition, Azure OpenAI / AI Services / AI Foundry, Azure Machine Learning, Azure AI Search, Vertex AI, Workbench, Agent Engine and Vertex AI Search.
+- 🗺️ **Delete impact map** — select any resource to see what is **deleted**, **stopped** or **kept** with it. The same map is shown again in the confirmation dialog.
+- 🔗 **Cascade deletion in the right order** — e.g. Studio apps → spaces → user profiles → domain + EFS; knowledge base data sources → knowledge base → vector store; Azure ML compute → endpoints → workspace → its storage / key vault / registry; Vertex endpoints are undeployed first.
+- 🔑 **Three ways to sign in on every cloud**
+  - **Keys** — AWS access keys, Azure service principal, Google service account JSON
+  - **Sign in with browser** — AWS IAM Identity Center (SSO, no CLI needed), Microsoft account, Google account
+  - **This computer** — reuses `aws configure` / `aws sso login`, `az login`, `gcloud auth application-default login` (auto-detected)
+- 🗂️ **Category tabs** — All · AI & ML · Compute · Storage · Networking · Databases · Monitoring
+- 💸 **Cost estimates** per resource and in total, so you clean up the expensive things first
+- 🔒 **Safe by design** — keys stay in memory only, in-use or committed resources are locked, nothing is deleted without an explicit confirmation
+- 📤 **CSV export** including the linked items of each resource
+- 📘 **Built-in guide** (press **F1**) with where-to-find-your-keys steps and required permissions
 
-## Download — no code required
+## Download — no Python needed
 
-**Students: you don't need to clone this repo or install Python.** Just grab the pre-built app for your OS from the [Releases](https://github.com/rajinikanthvadla-ai/orphanaut/releases) page:
+Get the latest version from **[Releases](https://github.com/rajinikanthvadla-ai/orphanaut/releases/latest)**:
 
-| Platform | File | How to run |
-|----------|------|------------|
-| **Windows** | `Orphanaut-Windows.zip` | Extract to e.g. `C:\Orphanaut` → open `Orphanaut.exe` |
-| **macOS** | `Orphanaut-macOS.zip` | Extract → open `Orphanaut.app` |
+| Your computer | Download | How to run |
+|---|---|---|
+| **Windows 10/11** | `Orphanaut-Setup-Windows.exe` | Run the installer (no admin needed) → Start menu → **Orphanaut** |
+| Windows (portable) | `Orphanaut-Windows-Portable.zip` | Extract to e.g. `C:\Orphanaut` → `Orphanaut.exe` |
+| **Mac with Apple Silicon** (M1–M4) | `Orphanaut-macOS-AppleSilicon.dmg` | Open → drag **Orphanaut** to Applications |
+| Mac with Intel | `Orphanaut-macOS-Intel.dmg` | Open → drag **Orphanaut** to Applications |
 
-> **Windows:** This is **not an installer** — nothing installs to Program Files. Extract the zip, then double-click `Orphanaut.exe`. If SmartScreen warns, click **More info** → **Run anyway**. If the app vanishes, check **Windows Security → Protection history** and **Allow** Orphanaut. See `WINDOWS-STUDENTS.txt` in the zip for full steps.
+> **Windows SmartScreen:** click **More info → Run anyway** (the app is not code-signed yet).
+> **macOS Gatekeeper:** right-click Orphanaut → **Open → Open**. If macOS says the app is damaged, run `xattr -dr com.apple.quarantine /Applications/Orphanaut.app`.
 
-> **macOS first launch:** If Gatekeeper blocks the app, right-click it → **Open** → **Open anyway**. This is normal for unsigned community apps.
+## Quick start (2 minutes)
 
-## Quick Start (2 minutes)
+1. Open Orphanaut and pick **AWS**, **Azure** or **Google Cloud** at the top.
+2. On the left choose how to connect — **Access keys**, **Sign in with browser**, or **This computer** — and connect.
+3. Tick the regions you used (start with one) and press **Scan**.
+4. Open the **AI & ML** tab (or any category). Click a row to see its **delete impact map**.
+5. Select what you don't need → **Delete selected** → review the map → confirm.
 
-1. Download the file for your OS from [Releases](https://github.com/rajinikanthvadla-ai/orphanaut/releases)
-2. Launch **Orphanaut**
-3. Paste your **Access Key ID** and **Secret Access Key** (from your instructor or AWS Console)
-4. Click **Connect**, pick your lab regions, then click **Scan**
-5. Review resources, see their estimated monthly cost, and delete anything you don't need
+## What gets found
 
-That's it — no terminal, no Python, no dependencies.
+| Cloud | AI & ML | Everything else |
+|---|---|---|
+| **AWS** | SageMaker Studio domains (profiles, spaces, apps, EFS), running Studio apps, endpoints (+ configs, models, inference components), notebook instances, training / processing / tuning / transform jobs, MLflow tracking servers, HyperPod clusters, feature groups · Bedrock knowledge bases (+ data sources + OpenSearch Serverless vector store), agents, provisioned throughput, custom & imported models, fine-tuning and batch jobs · OpenSearch Serverless · Kendra · Comprehend endpoints · Rekognition Custom Labels | EC2, EBS volumes & snapshots, Elastic IPs, NAT gateways, load balancers, VPC endpoints, security groups, RDS (instances & clusters), DynamoDB, ElastiCache, Lambda, ECS, EKS (+ node groups, Fargate profiles), S3, Route 53, CloudWatch Logs, Lightsail |
+| **Azure** | Azure OpenAI & AI Services accounts (deployments, AI Foundry projects, PTU), Azure Machine Learning workspaces / AI Foundry hubs (compute instances & clusters, online & serverless endpoints, linked storage / key vault / App Insights / registry), Azure AI Search | Virtual machines, managed disks, public IPs, storage accounts |
+| **Google Cloud** | Vertex AI endpoints (+ deployed models), models, Vector Search endpoints & indexes, custom / pipeline / tuning jobs, Agent Engine, Colab Enterprise runtimes, Feature Store online stores, Vertex AI Workbench, Vertex AI Search apps & data stores | Compute Engine instances, persistent disks, static IPs, Cloud Storage buckets |
 
----
+## Permissions
 
-### Advanced: run from source
+| Cloud | To scan | To delete |
+|---|---|---|
+| AWS | `ReadOnlyAccess` managed policy | Delete rights per service — `PowerUserAccess` or `AdministratorAccess` in a lab account |
+| Azure | **Reader** on the subscription | **Contributor** |
+| Google Cloud | **Viewer** on the project | **Editor** (APIs that aren't enabled are skipped automatically) |
 
-Only needed if you want to contribute to the code itself. Most users should just download the app above.
+> Use a dedicated sandbox / student account. **Deletion is permanent.**
+
+## Run from source
 
 ```bash
 git clone https://github.com/rajinikanthvadla-ai/orphanaut.git
 cd orphanaut
 python -m venv .venv
-
-# Windows
-.venv\Scripts\activate
-
-# macOS/Linux
-source .venv/bin/activate
-
+# Windows: .venv\Scripts\activate    macOS/Linux: source .venv/bin/activate
 pip install -e .
 orphanaut
 ```
 
-## Authentication
+Developers: `pip install -e ".[dev]"`, then `ruff check src tests`, `pytest`, and `python -m orphanaut --self-test`.
+Build the desktop app with `pyinstaller orphanaut.spec --noconfirm`. Pushing a tag like `v2.1.0` builds the Windows installer, macOS DMGs and Python wheel and publishes a GitHub release.
 
-### AWS — Access Keys
-
-Enter your **Access Key ID** and **Secret Access Key**. Optionally add a **Session Token** for temporary credentials.
-
-### AWS — SSO
-
-1. Configure SSO with the AWS CLI:
-   ```bash
-   aws configure sso
-   ```
-2. Log in before opening Orphanaut:
-   ```bash
-   aws sso login --profile YOUR_PROFILE
-   ```
-3. In Orphanaut, select **AWS** → **SSO** tab, choose your profile, and click **Connect**.
-
-### Azure — Service Principal
-
-1. In Azure Portal → **App registrations** → create or use an app
-2. Copy **Tenant ID**, **Client ID**, create a **Client secret**
-3. Copy your **Subscription ID**
-4. Grant the app **Contributor** (or Reader + delete roles) on the subscription
-5. In Orphanaut, select **Azure**, paste all four values, click **Connect**
-
-### GCP — Service Account
-
-1. In Google Cloud Console → **IAM** → **Service accounts** → create key (JSON)
-2. Grant roles like **Viewer** plus delete permissions for resources you want to clean
-3. In Orphanaut, select **GCP**, enter **Project ID**, paste or load the JSON key, click **Connect**
-
-## Scanned Resources
-
-| Cloud | Services scanned |
-|-------|------------------|
-| **AWS** | EC2, EBS, RDS, Lambda, S3, Security Groups, ELB, NAT, EKS, ECS, and more (18+ types) |
-| **Azure** | Virtual Machines, Managed Disks, Public IPs, Storage Accounts |
-| **GCP** | Compute Instances, Disks, Static IPs, Storage Buckets |
-
-## IAM Permissions
-
-Orphanaut needs **read** access to list resources and **delete** access if you use the delete feature. For educational accounts, a broad policy is often acceptable. Example policy:
-
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ec2:Describe*",
-        "ec2:TerminateInstances",
-        "ec2:DeleteVolume",
-        "ec2:DeleteSnapshot",
-        "ec2:ReleaseAddress",
-        "ec2:DeleteNatGateway",
-        "ec2:DeleteVpcEndpoints",
-        "ec2:DeleteSecurityGroup",
-        "elasticloadbalancing:Describe*",
-        "elasticloadbalancing:DeleteLoadBalancer",
-        "rds:Describe*",
-        "rds:DeleteDBInstance",
-        "rds:DeleteDBCluster",
-        "lambda:ListFunctions",
-        "lambda:DeleteFunction",
-        "s3:ListAllMyBuckets",
-        "s3:ListBucket",
-        "s3:DeleteObject",
-        "s3:DeleteBucket",
-        "ecs:List*",
-        "ecs:Describe*",
-        "ecs:DeleteCluster",
-        "eks:ListClusters",
-        "eks:DescribeCluster",
-        "eks:DeleteCluster",
-        "elasticache:Describe*",
-        "elasticache:DeleteCacheCluster",
-        "dynamodb:ListTables",
-        "dynamodb:DescribeTable",
-        "dynamodb:DeleteTable",
-        "logs:DescribeLogGroups",
-        "logs:DeleteLogGroup",
-        "route53:ListHostedZones",
-        "route53:ListResourceRecordSets",
-        "route53:ChangeResourceRecordSets",
-        "route53:DeleteHostedZone",
-        "lightsail:GetInstances",
-        "lightsail:DeleteInstance",
-        "sts:GetCallerIdentity"
-      ],
-      "Resource": "*"
-    }
-  ]
-}
-```
-
-> Restrict permissions in production. Students should use a dedicated AWS account or sandbox.
-
-## Building Executables
-
-```bash
-pip install -e ".[dev]"
-pyinstaller orphanaut.spec --noconfirm
-```
-
-- **Windows:** `dist/Orphanaut/Orphanaut.exe` (folder build; zip as `Orphanaut-Windows.zip` for releases)
-- **macOS:** `dist/Orphanaut.app`
-
-Releases are built automatically when you push a tag like `v1.0.0`.
-
-## Project Structure
+## Project structure
 
 ```
-orphanaut/
-├── src/orphanaut/
-│   ├── auth/          # AWS authentication (keys + SSO)
-│   ├── aws/           # Region utilities
-│   ├── scanners/      # Per-service resource scanners
-│   ├── actions/       # Delete handlers
-│   └── ui/            # PySide6 GUI
-├── tests/
-├── .github/workflows/ # CI and release builds
-└── orphanaut.spec     # PyInstaller configuration
+src/orphanaut/
+├── auth/          # Sign-in for AWS (keys, SSO device flow, profiles), Azure, Google Cloud
+├── scanners/      # One scanner per service — sagemaker.py, bedrock.py, azure_ai.py, gcp_vertex.py, …
+├── actions/       # Deletion, including ordered cascades for AI resources
+├── dependencies.py# Delete impact map model
+├── categories.py  # Category tabs
+├── providers/     # Sessions, pricing, small ARM / Google REST clients
+└── ui/            # PySide6 desktop UI (cloud tabs, workspaces, impact map, guide)
 ```
 
-## Contributing
+## FAQ
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Issues and pull requests are welcome.
+**Is it free?** Yes — MIT licensed, no account, no telemetry.
 
-## Security
+**Does it send my keys anywhere?** No. Keys are held in memory for the session and only sent to AWS, Microsoft or Google when calling their APIs.
 
-See [SECURITY.md](SECURITY.md). **Never commit AWS credentials.**
+**Will it delete my data in S3 / Blob / Cloud Storage?** Only if you select and delete the bucket or storage account itself. AI cascades never touch your training data or model artifacts — they show as *Kept — review* in the map.
+
+**Why is a resource locked?** It is in use (e.g. a Vertex model deployed to an endpoint, an attached disk) or under a commitment (Bedrock provisioned throughput with a term). Delete its parent first.
+
+**Can I use it in a classroom?** That is what it was built for. Students download the installer, sign in with the keys or browser login their instructor gives them, and clean up after each lab.
+
+## Contributing & security
+
+Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). Report vulnerabilities as described in [SECURITY.md](SECURITY.md). **Never commit cloud credentials.**
 
 ## License
 
-MIT — see [LICENSE](LICENSE). Copyright (c) 2026 Rajinikanth Vadla.
+MIT — see [LICENSE](LICENSE).
 
-## Disclaimer
+---
 
-Orphanaut is an educational tool. **Deletion is permanent.** Always review resources before deleting. The authors are not responsible for accidental data loss or AWS charges.
+<div align="center">
+
+**Made with ♥ by [Rajinikanth Vadla](https://github.com/rajinikanthvadla-ai)** · If Orphanaut saved you money, please ⭐ the repo so other students can find it.
+
+<sub>Keywords: AWS cost cleanup, delete unused AWS resources, find orphaned cloud resources, Azure cleanup tool, GCP unused resources, SageMaker cleanup, delete SageMaker domain, Bedrock knowledge base cost, Azure OpenAI cost, Vertex AI cleanup, cloud cost for students, FinOps desktop app.</sub>
+
+</div>

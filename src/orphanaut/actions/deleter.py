@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import boto3
 from botocore.exceptions import ClientError
 
@@ -12,8 +14,13 @@ class DeleteError(Exception):
     """Raised when a resource cannot be deleted."""
 
 
-def delete_resource(session: object, resource: CloudResource) -> None:
-    """Delete a single cloud resource. Raises DeleteError on failure."""
+def delete_resource(
+    session: object,
+    resource: CloudResource,
+    on_progress: Callable[[str], None] | None = None,
+) -> None:
+    """Delete a single cloud resource (and its dependents). Raises DeleteError on failure."""
+    progress = on_progress or (lambda _message: None)
     from orphanaut.actions.azure_deleter import delete_azure_resource
     from orphanaut.actions.gcp_deleter import delete_gcp_resource
     from orphanaut.providers.session import ProviderSession
@@ -21,23 +28,35 @@ def delete_resource(session: object, resource: CloudResource) -> None:
     if isinstance(session, ProviderSession):
         match session.provider:
             case CloudProvider.AZURE:
-                return delete_azure_resource(session.session, resource)
+                return delete_azure_resource(session.session, resource, progress)
             case CloudProvider.GCP:
-                return delete_gcp_resource(session.session, resource)
+                return delete_gcp_resource(session.session, resource, progress)
             case CloudProvider.AWS:
-                return _delete_aws_resource(session.session, resource)
+                return _delete_aws_resource(session.session, resource, progress)
             case _:
                 raise DeleteError(f"Unsupported provider: {session.provider}")
 
-    return _delete_aws_resource(session, resource)  # type: ignore[arg-type]
+    return _delete_aws_resource(session, resource, progress)  # type: ignore[arg-type]
 
 
-def _delete_aws_resource(session: boto3.Session, resource: CloudResource) -> None:
+def _delete_aws_resource(
+    session: boto3.Session,
+    resource: CloudResource,
+    progress: Callable[[str], None] = lambda _m: None,
+) -> None:
+    from orphanaut.actions.aws_ai_deleter import AI_SERVICES, delete_aws_ai_resource
+
     if not resource.deletable:
         raise DeleteError(
             f"{resource.resource_type} '{resource.name or resource.resource_id}' "
             "is in use or protected and cannot be deleted."
         )
+
+    if resource.service in AI_SERVICES:
+        try:
+            return delete_aws_ai_resource(session, resource, progress)
+        except ClientError as exc:
+            raise DeleteError(exc.response.get("Error", {}).get("Message", str(exc))) from exc
 
     region = resource.region if resource.region != "global" else "us-east-1"
 
@@ -94,7 +113,20 @@ def _delete_aws_resource(session: boto3.Session, resource: CloudResource) -> Non
                 )
 
             case ("RDS", "DB Cluster"):
-                session.client("rds", region_name=region).delete_db_cluster(
+                rds = session.client("rds", region_name=region)
+                for member in resource.extra.get("member_instances", []):
+                    progress(f"Deleting cluster instance {member}...")
+                    try:
+                        rds.delete_db_instance(DBInstanceIdentifier=member, SkipFinalSnapshot=True)
+                    except ClientError as exc:
+                        if exc.response.get("Error", {}).get("Code") != "DBInstanceNotFound":
+                            raise
+                for member in resource.extra.get("member_instances", []):
+                    progress(f"Waiting for {member} to be deleted...")
+                    rds.get_waiter("db_instance_deleted").wait(
+                        DBInstanceIdentifier=member, WaiterConfig={"Delay": 20, "MaxAttempts": 90}
+                    )
+                rds.delete_db_cluster(
                     DBClusterIdentifier=resource.extra["db_cluster_identifier"],
                     SkipFinalSnapshot=True,
                 )
@@ -113,9 +145,25 @@ def _delete_aws_resource(session: boto3.Session, resource: CloudResource) -> Non
                 )
 
             case ("EKS", "Cluster"):
-                session.client("eks", region_name=region).delete_cluster(
-                    name=resource.extra["cluster_name"]
-                )
+                eks = session.client("eks", region_name=region)
+                name = resource.extra["cluster_name"]
+                for nodegroup in resource.extra.get("nodegroups", []):
+                    progress(f"Deleting node group {nodegroup}...")
+                    eks.delete_nodegroup(clusterName=name, nodegroupName=nodegroup)
+                for profile in resource.extra.get("fargate_profiles", []):
+                    progress(f"Deleting Fargate profile {profile}...")
+                    eks.delete_fargate_profile(clusterName=name, fargateProfileName=profile)
+                    eks.get_waiter("fargate_profile_deleted").wait(
+                        clusterName=name, fargateProfileName=profile
+                    )
+                for nodegroup in resource.extra.get("nodegroups", []):
+                    progress(f"Waiting for node group {nodegroup} to be deleted...")
+                    eks.get_waiter("nodegroup_deleted").wait(
+                        clusterName=name,
+                        nodegroupName=nodegroup,
+                        WaiterConfig={"Delay": 30, "MaxAttempts": 60},
+                    )
+                eks.delete_cluster(name=name)
 
             case ("ElastiCache", "Cache Cluster"):
                 session.client("elasticache", region_name=region).delete_cache_cluster(

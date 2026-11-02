@@ -12,6 +12,9 @@ __all__ = ["estimate_monthly_cost", "format_monthly_cost"]
 
 
 def estimate_monthly_cost(resource: CloudResource) -> float | None:
+    # AI/ML scanners compute their own estimate from instance types and units.
+    if "monthly_cost" in resource.extra:
+        return resource.extra["monthly_cost"]
     match resource.provider:
         case CloudProvider.AWS:
             return estimate_aws_cost(resource)

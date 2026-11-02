@@ -7,6 +7,11 @@ from typing import Callable
 
 from orphanaut.models import CloudResource
 from orphanaut.providers.session import AzureSession
+from orphanaut.scanners.azure_ai import (
+    AzureAiSearchScanner,
+    AzureAiServicesScanner,
+    AzureMachineLearningScanner,
+)
 from orphanaut.scanners.azure_base import AzureBaseScanner
 from orphanaut.scanners.azure_disks import AzureDiskScanner
 from orphanaut.scanners.azure_public_ips import AzurePublicIpScanner
@@ -19,6 +24,9 @@ AZURE_SCANNERS: list[type[AzureBaseScanner]] = [
     AzureDiskScanner,
     AzurePublicIpScanner,
     AzureStorageScanner,
+    AzureAiServicesScanner,
+    AzureMachineLearningScanner,
+    AzureAiSearchScanner,
 ]
 
 
